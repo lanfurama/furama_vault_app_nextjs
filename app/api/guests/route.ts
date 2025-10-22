@@ -63,8 +63,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       data: [],
       total: 0,
-      skip: parseInt(searchParams.get('skip') || '0'),
-      limit: parseInt(searchParams.get('limit') || '20'),
+      skip: 0,
+      limit: 20,
       error: error instanceof Error ? error.message : 'Unknown error'
     })
   }
