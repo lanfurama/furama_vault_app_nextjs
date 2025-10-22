@@ -6,8 +6,5 @@
     "app/api/test-connection/route.ts": {
       "maxDuration": 10
     }
-  },
-  "env": {
-    "API_BASE_URL": "@api_base_url"
   }
 }
