@@ -135,7 +135,7 @@ export default function Home() {
   }
 
   // Get unique countries for filter
-  const uniqueCountries = [...new Set(allGuests.map(guest => guest.country).filter(Boolean))]
+  const uniqueCountries = Array.from(new Set(allGuests.map(guest => guest.country).filter(Boolean)))
 
   // Apply search and filters
   const filteredGuests = allGuests?.filter(guest => {
