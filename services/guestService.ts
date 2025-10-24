@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://phulonghotels.com:8001/api/v1/guests'
+const API_BASE_URL = '/api/proxy?endpoint=/api/v1/guests'
 
 export interface Guest {
   guest_id: number

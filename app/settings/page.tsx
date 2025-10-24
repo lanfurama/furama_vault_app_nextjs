@@ -37,7 +37,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     // Load saved API URL from localStorage
-    const savedApiUrl = localStorage.getItem('api_url') || 'http://localhost:8001'
+    const savedApiUrl = localStorage.getItem('api_url') || 'http://phulonghotels.com:8001'
     setApiUrl(savedApiUrl)
   }, [])
 
@@ -139,7 +139,7 @@ export default function SettingsPage() {
                   type="url"
                   value={apiUrl}
                   onChange={(e) => setApiUrl(e.target.value)}
-                  placeholder="http://localhost:8001"
+                  placeholder="http://phulonghotels.com:8001"
                   className="input"
                 />
                 <p className="mt-1 text-xs text-secondary-500 dark:text-secondary-400">

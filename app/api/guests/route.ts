@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function GET(request: NextRequest) {
   try {
     // Use default API URL for Vercel deployment
-    const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:8001'
+    const API_BASE_URL = process.env.API_BASE_URL || 'http://phulonghotels.com:8001'
 
     const apiUrl = `${API_BASE_URL}/api/v1/guest/`
     
