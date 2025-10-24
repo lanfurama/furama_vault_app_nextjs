@@ -5,10 +5,25 @@ export async function GET(request: NextRequest) {
     // Use default API URL for Vercel deployment
     const API_BASE_URL = process.env.API_BASE_URL || 'http://phulonghotels.com:8001'
 
-    const apiUrl = `${API_BASE_URL}/api/v1/guest/`
+    // Get query parameters
+    const { searchParams } = new URL(request.url)
+    const hasEmail = searchParams.get('has_email')
+    
+    // Build API URL with parameters
+    let apiUrl = `${API_BASE_URL}/api/v1/guests/guests/`
+    const queryParams = new URLSearchParams()
+    
+    if (hasEmail === 'true') {
+      queryParams.append('has_email', 'true')
+    }
+    
+    if (queryParams.toString()) {
+      apiUrl += `?${queryParams.toString()}`
+    }
     
     console.log('🔗 Backend API URL:', apiUrl)
     console.log('🔗 API_BASE_URL:', API_BASE_URL)
+    console.log('🔗 has_email parameter:', hasEmail)
     
     const response = await fetch(apiUrl, {
       method: 'GET',

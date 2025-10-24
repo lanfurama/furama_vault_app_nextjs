@@ -6,7 +6,6 @@ import {
   Settings, 
   BarChart3, 
   FileText, 
-  Home,
   Menu,
   X,
   Moon,
@@ -23,7 +22,6 @@ interface SidebarProps {
 }
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Guests', href: '/guests', icon: Users },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Reports', href: '/reports', icon: FileText },

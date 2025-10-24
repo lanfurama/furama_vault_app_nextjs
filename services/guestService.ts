@@ -14,6 +14,8 @@ export interface Guest {
   loyalty_points: number
   loyalty_tier: string
   created_date: string
+  checkin_day?: string
+  departure_date?: string
 }
 
 export interface GuestResponse {
@@ -64,12 +66,14 @@ export class GuestService {
     page?: number
     search?: string
     property_id?: number
+    has_email?: boolean
   }): Promise<GuestResponse> {
     const searchParams = new URLSearchParams()
     
     if (params?.page) searchParams.append('page', params.page.toString())
     if (params?.search) searchParams.append('search', params.search)
     if (params?.property_id) searchParams.append('property_id', params.property_id.toString())
+    if (params?.has_email !== undefined) searchParams.append('has_email', params.has_email.toString())
 
     const url = `${API_BASE_URL}/guests/${searchParams.toString() ? `?${searchParams.toString()}` : ''}`
     return this.makeRequest<GuestResponse>(url)

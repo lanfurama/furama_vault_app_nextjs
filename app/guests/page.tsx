@@ -4,24 +4,17 @@ import { useState, useEffect } from 'react'
 import { 
   Users, 
   Search, 
-  Filter, 
   Download, 
-  Plus, 
   Edit, 
   Trash2, 
   Eye,
   Mail,
   Phone,
-  MapPin,
   Calendar,
-  CheckSquare,
-  Square,
-  RefreshCw,
-  MoreVertical
+  RefreshCw
 } from 'lucide-react'
 import Sidebar from '@/components/Sidebar'
 import Header from '@/components/Header'
-import StatsCard from '@/components/StatsCard'
 import DataTable from '@/components/DataTable'
 import Modal from '@/components/Modal'
 import Toast from '@/components/Toast'
@@ -45,6 +38,8 @@ interface Guest {
   loyalty_points: number
   loyalty_tier: string
   created_date: string
+  checkin_day?: string
+  departure_date?: string
 }
 
 interface ToastState {
@@ -61,7 +56,6 @@ export default function GuestsPage() {
   const [countryFilter, setCountryFilter] = useState<string>('all')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(false)
-  const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showCheckInsModal, setShowCheckInsModal] = useState(false)
@@ -82,7 +76,11 @@ export default function GuestsPage() {
     goToPage,
     goToNextPage,
     goToPreviousPage
-  } = useGuests({ autoFetch: true, searchTerm })
+  } = useGuests({ 
+    autoFetch: true, 
+    searchTerm,
+    hasEmail: emailFilter === 'with_email' ? true : emailFilter === 'without_email' ? false : undefined
+  })
 
   // Dark mode handling
   useEffect(() => {
@@ -117,28 +115,22 @@ export default function GuestsPage() {
     return () => clearTimeout(timeoutId)
   }, [searchTerm, searchGuests, refreshGuests])
 
+  // Handle email filter changes - let useGuests hook handle this automatically
+  // useEffect(() => {
+  //   refreshGuests()
+  // }, [emailFilter, refreshGuests])
+
   // Calculate statistics
   const totalGuests = pagination.count || guests.length
   const guestsWithEmail = guests.filter(guest => guest.email && guest.email.trim() !== '').length
   const guestsWithoutEmail = guests.length - guestsWithEmail
   const uniqueCountries = Array.from(new Set(guests.map(guest => guest.first_name).filter(Boolean)))
 
-  // Apply client-side filters (email filter only, search is handled by server)
+  // Apply client-side filters (country filter only, email and search are handled by server)
   const filteredGuests = guests?.filter(guest => {
-    const matchesEmailFilter = (() => {
-      switch (emailFilter) {
-        case 'with_email':
-          return guest.email && guest.email.trim() !== ''
-        case 'without_email':
-          return !guest.email || guest.email.trim() === ''
-        default:
-          return true
-      }
-    })()
-    
     const matchesCountryFilter = countryFilter === 'all' || guest.first_name === countryFilter
     
-    return matchesEmailFilter && matchesCountryFilter
+    return matchesCountryFilter
   }) || []
 
   const handleSelectGuest = (guestId: number) => {
@@ -157,21 +149,12 @@ export default function GuestsPage() {
     }
   }
 
-  const handleExportSelected = () => {
-    const selectedGuestsData = guests.filter(guest => selectedGuests.includes(guest.guest_id || 0))
-    const filename = exportToExcel(selectedGuestsData, 'selected_guests_export')
-    showToast(`Exported ${selectedGuestsData.length} selected guests to ${filename}`, 'success')
-  }
 
   const handleExportAll = () => {
     const filename = exportToExcel(guests, 'all_guests_export')
     showToast(`Exported all ${guests.length} guests to ${filename}`, 'success')
   }
 
-  const handleAddGuest = () => {
-    setSelectedGuest(null)
-    setShowAddModal(true)
-  }
 
   const handleEditGuest = (guest: Guest) => {
     setSelectedGuest(guest)
@@ -331,14 +314,27 @@ export default function GuestsPage() {
       )
     },
     {
-      key: 'created_date',
-      label: 'Created',
+      key: 'checkin_day',
+      label: 'Check-in Day',
       sortable: true,
       render: (value: any, row: Guest) => (
         <div className="flex items-center space-x-2">
           <Calendar className="w-4 h-4 text-secondary-400" />
           <span className="text-sm text-secondary-900 dark:text-secondary-100">
-            {row.created_date ? new Date(row.created_date).toLocaleDateString() : 'N/A'}
+            {row.checkin_day ? new Date(row.checkin_day).toLocaleDateString() : 'N/A'}
+          </span>
+        </div>
+      )
+    },
+    {
+      key: 'departure_date',
+      label: 'Departure Date',
+      sortable: true,
+      render: (value: any, row: Guest) => (
+        <div className="flex items-center space-x-2">
+          <Calendar className="w-4 h-4 text-secondary-400" />
+          <span className="text-sm text-secondary-900 dark:text-secondary-100">
+            {row.departure_date ? new Date(row.departure_date).toLocaleDateString() : 'N/A'}
           </span>
         </div>
       )
@@ -394,45 +390,6 @@ export default function GuestsPage() {
 
           {/* Main Content */}
           <main className="flex-1 p-4 space-y-4">
-          {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatsCard
-              title="Total Guests"
-              value={totalGuests.toLocaleString()}
-              change={12}
-              changeType="increase"
-              icon={Users}
-              color="primary"
-              loading={loading}
-            />
-            <StatsCard
-              title="With Email"
-              value={guestsWithEmail.toLocaleString()}
-              change={8}
-              changeType="increase"
-              icon={Mail}
-              color="success"
-              loading={loading}
-            />
-            <StatsCard
-              title="Countries"
-              value={uniqueCountries.length.toLocaleString()}
-              change={3}
-              changeType="increase"
-              icon={MapPin}
-              color="warning"
-              loading={loading}
-            />
-            <StatsCard
-              title="This Month"
-              value={Math.floor(totalGuests * 0.15).toLocaleString()}
-              change={-2}
-              changeType="decrease"
-              icon={Calendar}
-              color="secondary"
-              loading={loading}
-            />
-          </div>
 
           {/* Guest Management */}
           <div className="card p-3">
@@ -443,7 +400,7 @@ export default function GuestsPage() {
                     Guest Management
                   </h2>
                   <p className="text-xs text-secondary-500 dark:text-secondary-400">
-                    Manage your guest database efficiently
+                    Total Guests: <strong className="text-primary-600 dark:text-primary-400">{totalGuests.toLocaleString()}</strong>
                   </p>
                 </div>
                 <div className="flex items-center space-x-2 text-xs text-secondary-500 dark:text-secondary-400">
@@ -454,18 +411,9 @@ export default function GuestsPage() {
               </div>
               
               <div className="flex flex-wrap gap-2">
-                {selectedGuests.length > 0 && (
-                  <button
-                    onClick={handleExportSelected}
-                    className="btn-outline flex items-center space-x-2"
-                  >
-                    <Download className="h-4 w-4" />
-                    <span>Export Selected ({selectedGuests.length})</span>
-                  </button>
-                )}
                 <button
                   onClick={handleExportAll}
-                  className="btn-secondary flex items-center space-x-2"
+                  className="btn-primary flex items-center space-x-2"
                 >
                   <Download className="h-4 w-4" />
                   <span>Export All</span>
@@ -476,13 +424,6 @@ export default function GuestsPage() {
                 >
                   <RefreshCw className="h-4 w-4" />
                   <span>Refresh</span>
-                </button>
-                <button
-                  onClick={handleAddGuest}
-                  className="btn-primary flex items-center space-x-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Add Guest</span>
                 </button>
               </div>
               
@@ -540,8 +481,6 @@ export default function GuestsPage() {
             data={filteredGuests}
             columns={columns}
             searchable={false}
-            exportable={true}
-            onExport={handleExportAll}
             loading={loading}
             emptyMessage="No guests found. Try adjusting your search terms or add new guests."
           />
@@ -602,18 +541,6 @@ export default function GuestsPage() {
         </main>
 
         {/* Modals */}
-      <Modal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        title="Add New Guest"
-        size="lg"
-      >
-        <GuestForm
-          guest={null}
-          onSave={handleSaveGuest}
-          onCancel={() => setShowAddModal(false)}
-        />
-      </Modal>
 
       <Modal
         isOpen={showEditModal}

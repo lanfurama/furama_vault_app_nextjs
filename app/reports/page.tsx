@@ -78,26 +78,24 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900 transition-colors duration-300">
-      {/* Sidebar */}
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-        darkMode={darkMode}
-        onToggleDarkMode={toggleDarkMode}
-      />
-
-      {/* Main Content */}
-      <div className="main-content">
-        {/* Header */}
-        <Header 
-          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-          title="Reports"
-          subtitle="Generate and export guest data reports"
+    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'dark' : ''}`}>
+      <div className="flex min-h-screen">
+        <Sidebar 
+          isOpen={sidebarOpen} 
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
+          darkMode={darkMode}
+          onToggleDarkMode={toggleDarkMode}
         />
+        
+        <div className="flex-1 flex flex-col min-h-screen">
+          <Header 
+            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+            title="Reports"
+            subtitle="Generate and export guest data reports"
+          />
 
-        {/* Reports Content */}
-        <main className="p-6 space-y-6">
+          {/* Reports Content */}
+          <main className="flex-1 p-4 space-y-4">
           {/* Report Configuration */}
           <div className="card">
             <div className="mb-6">
@@ -246,7 +244,8 @@ export default function ReportsPage() {
               ))}
             </div>
           </div>
-        </main>
+          </main>
+        </div>
       </div>
     </div>
   )

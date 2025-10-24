@@ -9,7 +9,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Endpoint parameter is required' }, { status: 400 })
     }
 
-    const apiUrl = `http://phulonghotels.com:8001${endpoint}`
+    // Build the full API URL with all query parameters except 'endpoint'
+    const apiQueryParams = new URLSearchParams()
+    for (const [key, value] of searchParams.entries()) {
+      if (key !== 'endpoint') {
+        apiQueryParams.append(key, value)
+      }
+    }
+    
+    // Check if endpoint already has query parameters
+    const hasExistingParams = endpoint.includes('?')
+    const separator = hasExistingParams ? '&' : '?'
+    
+    const apiUrl = `http://phulonghotels.com:8001${endpoint}${apiQueryParams.toString() ? `${separator}${apiQueryParams.toString()}` : ''}`
+    
+    console.log('🔗 Proxy API URL:', apiUrl)
+    console.log('🔗 Query params:', apiQueryParams.toString())
     
     const response = await fetch(apiUrl, {
       method: 'GET',
@@ -42,8 +57,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Endpoint parameter is required' }, { status: 400 })
     }
 
+    // Build the full API URL with all query parameters except 'endpoint'
+    const apiQueryParams = new URLSearchParams()
+    for (const [key, value] of searchParams.entries()) {
+      if (key !== 'endpoint') {
+        apiQueryParams.append(key, value)
+      }
+    }
+
+    // Check if endpoint already has query parameters
+    const hasExistingParams = endpoint.includes('?')
+    const separator = hasExistingParams ? '&' : '?'
+
     const body = await request.json()
-    const apiUrl = `http://phulonghotels.com:8001${endpoint}`
+    const apiUrl = `http://phulonghotels.com:8001${endpoint}${apiQueryParams.toString() ? `${separator}${apiQueryParams.toString()}` : ''}`
     
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -77,8 +104,20 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Endpoint parameter is required' }, { status: 400 })
     }
 
+    // Build the full API URL with all query parameters except 'endpoint'
+    const apiQueryParams = new URLSearchParams()
+    for (const [key, value] of searchParams.entries()) {
+      if (key !== 'endpoint') {
+        apiQueryParams.append(key, value)
+      }
+    }
+
+    // Check if endpoint already has query parameters
+    const hasExistingParams = endpoint.includes('?')
+    const separator = hasExistingParams ? '&' : '?'
+
     const body = await request.json()
-    const apiUrl = `http://phulonghotels.com:8001${endpoint}`
+    const apiUrl = `http://phulonghotels.com:8001${endpoint}${apiQueryParams.toString() ? `${separator}${apiQueryParams.toString()}` : ''}`
     
     const response = await fetch(apiUrl, {
       method: 'PUT',
@@ -112,7 +151,19 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Endpoint parameter is required' }, { status: 400 })
     }
 
-    const apiUrl = `http://phulonghotels.com:8001${endpoint}`
+    // Build the full API URL with all query parameters except 'endpoint'
+    const apiQueryParams = new URLSearchParams()
+    for (const [key, value] of searchParams.entries()) {
+      if (key !== 'endpoint') {
+        apiQueryParams.append(key, value)
+      }
+    }
+
+    // Check if endpoint already has query parameters
+    const hasExistingParams = endpoint.includes('?')
+    const separator = hasExistingParams ? '&' : '?'
+
+    const apiUrl = `http://phulonghotels.com:8001${endpoint}${apiQueryParams.toString() ? `${separator}${apiQueryParams.toString()}` : ''}`
     
     const response = await fetch(apiUrl, {
       method: 'DELETE',

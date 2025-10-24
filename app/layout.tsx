@@ -10,6 +10,11 @@ export const metadata: Metadata = {
   keywords: 'guest management, hotel management, resort, analytics, reporting',
   authors: [{ name: 'Furama Resort' }],
   viewport: 'width=device-width, initial-scale=1',
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/favicon.ico',
+  },
 }
 
 export default function RootLayout({

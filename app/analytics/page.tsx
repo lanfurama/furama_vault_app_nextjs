@@ -9,14 +9,21 @@ import Chart from '@/components/Chart'
 import { useRouter } from 'next/navigation'
 
 interface Guest {
-  id?: number
-  name?: string
-  first_name?: string
-  last_name?: string
-  email?: string
-  country?: string
-  created_at?: string
-  updated_at?: string
+  guest_id: number
+  guest_number: string
+  title: string
+  first_name: string
+  last_name: string
+  guest_type: string
+  vip_status: string
+  guest_status: string
+  email: string | null
+  phone: string | null
+  loyalty_points: number
+  loyalty_tier: string
+  created_date: string
+  checkin_day?: string
+  departure_date?: string
 }
 
 export default function AnalyticsPage() {
@@ -54,9 +61,26 @@ export default function AnalyticsPage() {
         const response = await fetch('/api/guests')
         if (!response.ok) throw new Error('Failed to fetch guests')
         const data = await response.json()
-        setGuests(data.data || data || [])
+        console.log('Analytics API response:', data)
+        
+        // Handle different response formats
+        let guestsData = []
+        if (Array.isArray(data)) {
+          guestsData = data
+        } else if (data.data && Array.isArray(data.data)) {
+          guestsData = data.data
+        } else if (data.results && Array.isArray(data.results)) {
+          guestsData = data.results
+        } else {
+          console.warn('Unexpected data format:', data)
+          guestsData = []
+        }
+        
+        setGuests(guestsData)
       } catch (err) {
+        console.error('Error fetching guests:', err)
         setError(err instanceof Error ? err.message : 'An error occurred')
+        setGuests([])
       } finally {
         setLoading(false)
       }
@@ -66,30 +90,30 @@ export default function AnalyticsPage() {
   }, [])
 
   // Calculate analytics data
-  const totalGuests = guests.length
-  const guestsWithEmail = guests.filter(guest => guest.email && guest.email.trim() !== '').length
-  const uniqueCountries = Array.from(new Set(guests.map(guest => guest.country).filter(Boolean))).length
+  const totalGuests = Array.isArray(guests) ? guests.length : 0
+  const guestsWithEmail = Array.isArray(guests) ? guests.filter(guest => guest.email && guest.email.trim() !== '').length : 0
+  const uniqueCountries = Array.isArray(guests) ? Array.from(new Set(guests.map(guest => guest.first_name).filter(Boolean))).length : 0
   
   // Country distribution
-  const countryData = guests.reduce((acc, guest) => {
-    const country = guest.country || 'Unknown'
+  const countryData = Array.isArray(guests) ? guests.reduce((acc, guest) => {
+    const country = guest.first_name || 'Unknown'
     acc[country] = (acc[country] || 0) + 1
     return acc
-  }, {} as Record<string, number>)
+  }, {} as Record<string, number>) : {}
 
   const topCountries = Object.entries(countryData)
     .sort(([,a], [,b]) => b - a)
     .slice(0, 5)
 
   // Monthly registration data
-  const monthlyData = guests.reduce((acc, guest) => {
-    if (guest.created_at) {
-      const date = new Date(guest.created_at)
+  const monthlyData = Array.isArray(guests) ? guests.reduce((acc, guest) => {
+    if (guest.created_date) {
+      const date = new Date(guest.created_date)
       const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
       acc[month] = (acc[month] || 0) + 1
     }
     return acc
-  }, {} as Record<string, number>)
+  }, {} as Record<string, number>) : {}
 
   const chartData = {
     labels: Object.keys(monthlyData).sort(),
@@ -120,26 +144,24 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900 transition-colors duration-300">
-      {/* Sidebar */}
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-        darkMode={darkMode}
-        onToggleDarkMode={toggleDarkMode}
-      />
-
-      {/* Main Content */}
-      <div className="main-content">
-        {/* Header */}
-        <Header 
-          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-          title="Analytics"
-          subtitle="Guest data insights and trends"
+    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'dark' : ''}`}>
+      <div className="flex min-h-screen">
+        <Sidebar 
+          isOpen={sidebarOpen} 
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
+          darkMode={darkMode}
+          onToggleDarkMode={toggleDarkMode}
         />
+        
+        <div className="flex-1 flex flex-col min-h-screen">
+          <Header 
+            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+            title="Analytics"
+            subtitle="Guest data insights and trends"
+          />
 
-        {/* Analytics Content */}
-        <main className="p-6 space-y-6">
+          {/* Analytics Content */}
+          <main className="flex-1 p-4 space-y-4">
           {/* Statistics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatsCard
@@ -292,7 +314,8 @@ export default function AnalyticsPage() {
               </table>
             </div>
           </div>
-        </main>
+          </main>
+        </div>
       </div>
     </div>
   )
