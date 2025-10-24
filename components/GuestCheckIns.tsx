@@ -114,7 +114,7 @@ export default function GuestCheckIns({ guestId, guestName, onClose }: GuestChec
       ) : (
         <div className="space-y-4">
           {checkIns.map((checkIn) => (
-            <div key={checkIn.id} className="card">
+            <div key={checkIn.checkin_id} className="card">
               <div className="flex items-start justify-between">
                 <div className="flex items-start space-x-4">
                   <div className="p-2 bg-primary-100 dark:bg-primary-900 rounded-lg">
@@ -158,7 +158,7 @@ export default function GuestCheckIns({ guestId, guestName, onClose }: GuestChec
                       <div className="flex items-center space-x-2">
                         <Clock className="w-4 h-4 text-secondary-400" />
                         <span className="text-secondary-600 dark:text-secondary-400">
-                          Created: {formatDate(checkIn.created_at)}
+                          Created: {formatDate(checkIn.created_date)}
                         </span>
                       </div>
                     </div>

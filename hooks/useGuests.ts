@@ -131,7 +131,7 @@ export function useGuests(options: UseGuestsOptions = {}) {
       
       // Update the guest in the list
       setGuests(prev => prev.map(guest => 
-        guest.id === id ? updatedGuest : guest
+        guest.guest_id === id ? updatedGuest : guest
       ))
       
       return updatedGuest
@@ -152,7 +152,7 @@ export function useGuests(options: UseGuestsOptions = {}) {
       await GuestService.deleteGuest(id)
       
       // Remove the guest from the list
-      setGuests(prev => prev.filter(guest => guest.id !== id))
+      setGuests(prev => prev.filter(guest => guest.guest_id !== id))
       
       return true
     } catch (err) {

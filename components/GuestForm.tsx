@@ -21,7 +21,7 @@ interface Guest {
 
 interface GuestFormProps {
   guest?: Guest | null
-  onSave: (guest: Guest) => void
+  onSave: (guest: Partial<Guest>) => void
   onCancel: () => void
   loading?: boolean
 }
