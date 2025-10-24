@@ -26,20 +26,25 @@ import DataTable from '@/components/DataTable'
 import Modal from '@/components/Modal'
 import Toast from '@/components/Toast'
 import GuestForm from '@/components/GuestForm'
+import GuestCheckIns from '@/components/GuestCheckIns'
+import { useGuests } from '@/hooks/useGuests'
 import { exportToExcel } from '@/utils/exportUtils'
 import { useRouter } from 'next/navigation'
 
 interface Guest {
-  id?: number
-  name?: string
-  first_name?: string
-  last_name?: string
-  email?: string
-  phone?: string
-  country?: string
-  address?: string
-  created_at?: string
-  updated_at?: string
+  guest_id: number
+  guest_number: string
+  title: string
+  first_name: string
+  last_name: string
+  guest_type: string
+  vip_status: string
+  guest_status: string
+  email: string | null
+  phone: string | null
+  loyalty_points: number
+  loyalty_tier: string
+  created_date: string
 }
 
 interface ToastState {
@@ -50,9 +55,6 @@ interface ToastState {
 
 export default function GuestsPage() {
   const router = useRouter()
-  const [guests, setGuests] = useState<Guest[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedGuests, setSelectedGuests] = useState<number[]>([])
   const [emailFilter, setEmailFilter] = useState<'all' | 'with_email' | 'without_email'>('all')
@@ -62,8 +64,25 @@ export default function GuestsPage() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showCheckInsModal, setShowCheckInsModal] = useState(false)
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null)
   const [toast, setToast] = useState<ToastState>({ show: false, message: '', type: 'info' })
+
+  // Use the custom hook for guest management
+  const {
+    guests,
+    loading,
+    error,
+    pagination,
+    searchGuests,
+    createGuest,
+    updateGuest,
+    deleteGuest,
+    refreshGuests,
+    goToPage,
+    goToNextPage,
+    goToPreviousPage
+  } = useGuests({ autoFetch: true, searchTerm })
 
   // Dark mode handling
   useEffect(() => {
@@ -85,59 +104,27 @@ export default function GuestsPage() {
     }
   }
 
-  const fetchGuests = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      
-      const response = await fetch('/api/guests')
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      
-      const data = await response.json()
-      let guestsData = []
-      
-      if (data.data) {
-        guestsData = data.data
-      } else if (Array.isArray(data)) {
-        guestsData = data
-      } else if (data.results) {
-        guestsData = data.results
-      } else {
-        throw new Error('Unknown response format from API')
-      }
-      
-      setGuests(guestsData || [])
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
-      console.error('Error fetching guests:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
+  // Handle search with debounce
   useEffect(() => {
-    fetchGuests()
-  }, [])
+    const timeoutId = setTimeout(() => {
+      if (searchTerm) {
+        searchGuests(searchTerm)
+      } else {
+        refreshGuests()
+      }
+    }, 300)
+
+    return () => clearTimeout(timeoutId)
+  }, [searchTerm, searchGuests, refreshGuests])
 
   // Calculate statistics
-  const totalGuests = guests.length
+  const totalGuests = pagination.count || guests.length
   const guestsWithEmail = guests.filter(guest => guest.email && guest.email.trim() !== '').length
-  const guestsWithoutEmail = totalGuests - guestsWithEmail
-  const uniqueCountries = Array.from(new Set(guests.map(guest => guest.country).filter(Boolean)))
+  const guestsWithoutEmail = guests.length - guestsWithEmail
+  const uniqueCountries = Array.from(new Set(guests.map(guest => guest.first_name).filter(Boolean)))
 
-  // Apply search and filters
+  // Apply client-side filters (email filter only, search is handled by server)
   const filteredGuests = guests?.filter(guest => {
-    const fullName = `${guest.first_name || ''} ${guest.last_name || ''}`.trim() || guest.name || ''
-    const matchesSearch = (
-      fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (guest.first_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (guest.last_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (guest.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (guest.email?.toLowerCase() || '').includes(searchTerm.toLowerCase())
-    )
-    
     const matchesEmailFilter = (() => {
       switch (emailFilter) {
         case 'with_email':
@@ -149,9 +136,9 @@ export default function GuestsPage() {
       }
     })()
     
-    const matchesCountryFilter = countryFilter === 'all' || guest.country === countryFilter
+    const matchesCountryFilter = countryFilter === 'all' || guest.first_name === countryFilter
     
-    return matchesSearch && matchesEmailFilter && matchesCountryFilter
+    return matchesEmailFilter && matchesCountryFilter
   }) || []
 
   const handleSelectGuest = (guestId: number) => {
@@ -166,12 +153,12 @@ export default function GuestsPage() {
     if (selectedGuests.length === filteredGuests.length) {
       setSelectedGuests([])
     } else {
-      setSelectedGuests(filteredGuests.map(guest => guest.id || 0).filter(id => id > 0))
+      setSelectedGuests(filteredGuests.map(guest => guest.guest_id || 0).filter(id => id > 0))
     }
   }
 
   const handleExportSelected = () => {
-    const selectedGuestsData = guests.filter(guest => selectedGuests.includes(guest.id || 0))
+    const selectedGuestsData = guests.filter(guest => selectedGuests.includes(guest.guest_id || 0))
     const filename = exportToExcel(selectedGuestsData, 'selected_guests_export')
     showToast(`Exported ${selectedGuestsData.length} selected guests to ${filename}`, 'success')
   }
@@ -196,6 +183,53 @@ export default function GuestsPage() {
     setShowDeleteModal(true)
   }
 
+  const handleViewCheckIns = (guest: Guest) => {
+    setSelectedGuest(guest)
+    setShowCheckInsModal(true)
+  }
+
+  const handleSaveGuest = async (guestData: Partial<Guest>) => {
+    try {
+      if (selectedGuest) {
+        // Update existing guest
+        const updatedGuest = await updateGuest(selectedGuest.guest_id!, guestData)
+        if (updatedGuest) {
+          showToast('Guest updated successfully!', 'success')
+          setShowEditModal(false)
+        } else {
+          showToast('Failed to update guest', 'error')
+        }
+      } else {
+        // Create new guest
+        const newGuest = await createGuest(guestData)
+        if (newGuest) {
+          showToast('Guest added successfully!', 'success')
+          setShowAddModal(false)
+        } else {
+          showToast('Failed to add guest', 'error')
+        }
+      }
+    } catch (error) {
+      showToast('An error occurred while saving guest', 'error')
+    }
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!selectedGuest?.guest_id) return
+
+    try {
+      const success = await deleteGuest(selectedGuest.guest_id)
+      if (success) {
+        showToast('Guest deleted successfully!', 'success')
+        setShowDeleteModal(false)
+      } else {
+        showToast('Failed to delete guest', 'error')
+      }
+    } catch (error) {
+      showToast('An error occurred while deleting guest', 'error')
+    }
+  }
+
   const showToast = (message: string, type: ToastState['type']) => {
     setToast({ show: true, message, type })
     setTimeout(() => {
@@ -212,8 +246,8 @@ export default function GuestsPage() {
       render: (value: any, row: Guest) => (
         <input
           type="checkbox"
-          checked={selectedGuests.includes(row.id || 0)}
-          onChange={() => handleSelectGuest(row.id || 0)}
+          checked={selectedGuests.includes(row.guest_id || 0)}
+          onChange={() => handleSelectGuest(row.guest_id || 0)}
           className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-secondary-300 dark:border-secondary-600 rounded"
         />
       )
@@ -223,22 +257,22 @@ export default function GuestsPage() {
       label: 'Name',
       sortable: true,
       render: (value: any, row: Guest) => (
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
-            <Users className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-          </div>
-          <div>
-            <div className="text-sm font-medium text-secondary-900 dark:text-secondary-100">
-              {row.first_name && row.last_name 
-                ? `${row.first_name} ${row.last_name}`.trim()
-                : row.name || 'No Name'
-              }
-            </div>
-            <div className="text-xs text-secondary-500 dark:text-secondary-400">
-              ID: #{row.id || 'N/A'}
-            </div>
-          </div>
-        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
+                            <Users className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-secondary-900 dark:text-secondary-100">
+                              {row.first_name && row.last_name 
+                                ? `${row.first_name} ${row.last_name}`.trim()
+                                : row.first_name || 'No Name'
+                              }
+                            </div>
+                            <div className="text-xs text-secondary-500 dark:text-secondary-400">
+                              #{row.guest_id || 'N/A'} • {row.guest_number}
+                            </div>
+                          </div>
+                        </div>
       )
     },
     {
@@ -268,27 +302,43 @@ export default function GuestsPage() {
       )
     },
     {
-      key: 'country',
-      label: 'Country',
+      key: 'guest_type',
+      label: 'Type',
       sortable: true,
       render: (value: any, row: Guest) => (
         <div className="flex items-center space-x-2">
-          <MapPin className="w-4 h-4 text-secondary-400" />
+          <Users className="w-4 h-4 text-secondary-400" />
           <span className="text-sm text-secondary-900 dark:text-secondary-100">
-            {row.country || 'No Country'}
+            {row.guest_type || 'N/A'}
           </span>
         </div>
       )
     },
     {
-      key: 'created_at',
+      key: 'loyalty_tier',
+      label: 'Loyalty',
+      sortable: true,
+      render: (value: any, row: Guest) => (
+        <div className="flex items-center space-x-2">
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            row.loyalty_tier === 'Gold' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+            row.loyalty_tier === 'Silver' ? 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200' :
+            'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+          }`}>
+            {row.loyalty_tier || 'Bronze'}
+          </span>
+        </div>
+      )
+    },
+    {
+      key: 'created_date',
       label: 'Created',
       sortable: true,
       render: (value: any, row: Guest) => (
         <div className="flex items-center space-x-2">
           <Calendar className="w-4 h-4 text-secondary-400" />
           <span className="text-sm text-secondary-900 dark:text-secondary-100">
-            {row.created_at ? new Date(row.created_at).toLocaleDateString() : 'N/A'}
+            {row.created_date ? new Date(row.created_date).toLocaleDateString() : 'N/A'}
           </span>
         </div>
       )
@@ -299,6 +349,13 @@ export default function GuestsPage() {
       sortable: false,
       render: (value: any, row: Guest) => (
         <div className="flex items-center space-x-2">
+          <button
+            onClick={() => handleViewCheckIns(row)}
+            className="p-2 text-secondary-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+            title="View check-ins"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
           <button
             onClick={() => handleEditGuest(row)}
             className="p-2 text-secondary-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
@@ -319,28 +376,26 @@ export default function GuestsPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900 transition-colors duration-300">
-      {/* Sidebar */}
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-        darkMode={darkMode}
-        onToggleDarkMode={toggleDarkMode}
-      />
-
-      {/* Main Content */}
-      <div className="main-content">
-        {/* Header */}
-        <Header 
-          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-          title="Guest Management"
-          subtitle="Manage and organize guest information"
+    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'dark' : ''}`}>
+      <div className="flex min-h-screen">
+        <Sidebar 
+          isOpen={sidebarOpen} 
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
+          darkMode={darkMode}
+          onToggleDarkMode={toggleDarkMode}
         />
+        
+        <div className="flex-1 flex flex-col">
+          <Header 
+            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+            title="Guest Management"
+            subtitle="Manage and organize guest information"
+          />
 
-        {/* Main Content */}
-        <main className="p-6 space-y-6">
+          {/* Main Content */}
+          <main className="flex-1 p-4 space-y-4">
           {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatsCard
               title="Total Guests"
               value={totalGuests.toLocaleString()}
@@ -379,17 +434,25 @@ export default function GuestsPage() {
             />
           </div>
 
-          {/* Quick Actions */}
-          <div className="card">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-semibold text-secondary-900 dark:text-secondary-100">
-                  Guest Management
-                </h2>
-                <p className="text-sm text-secondary-500 dark:text-secondary-400">
-                  Manage your guest database efficiently
-                </p>
+          {/* Guest Management */}
+          <div className="card p-3">
+            <div className="space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                  <h2 className="text-sm font-semibold text-secondary-900 dark:text-secondary-100">
+                    Guest Management
+                  </h2>
+                  <p className="text-xs text-secondary-500 dark:text-secondary-400">
+                    Manage your guest database efficiently
+                  </p>
+                </div>
+                <div className="flex items-center space-x-2 text-xs text-secondary-500 dark:text-secondary-400">
+                  <span>Filtered: <strong className="text-secondary-900 dark:text-secondary-100">{filteredGuests.length}</strong></span>
+                  <span>•</span>
+                  <span>Selected: <strong className="text-primary-600 dark:text-primary-400">{selectedGuests.length}</strong></span>
+                </div>
               </div>
+              
               <div className="flex flex-wrap gap-2">
                 {selectedGuests.length > 0 && (
                   <button
@@ -408,7 +471,7 @@ export default function GuestsPage() {
                   <span>Export All</span>
                 </button>
                 <button
-                  onClick={fetchGuests}
+                  onClick={refreshGuests}
                   className="btn-ghost flex items-center space-x-2"
                 >
                   <RefreshCw className="h-4 w-4" />
@@ -422,47 +485,31 @@ export default function GuestsPage() {
                   <span>Add Guest</span>
                 </button>
               </div>
-            </div>
-          </div>
-
-          {/* Filters */}
-          <div className="card">
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <h3 className="text-lg font-semibold text-secondary-900 dark:text-secondary-100">
-                  Filters & Search
-                </h3>
-                <div className="flex items-center space-x-2 text-sm text-secondary-500 dark:text-secondary-400">
-                  <span>Filtered: <strong className="text-secondary-900 dark:text-secondary-100">{filteredGuests.length}</strong></span>
-                  <span>•</span>
-                  <span>Selected: <strong className="text-primary-600 dark:text-primary-400">{selectedGuests.length}</strong></span>
-                </div>
-              </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+                  <label className="block text-xs font-medium text-secondary-700 dark:text-secondary-300 mb-1">
                     Search Guests
                   </label>
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400" />
+                    <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-secondary-400" />
                     <input
                       type="text"
                       placeholder="Search by name or email..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="input pl-10"
+                      className="input pl-8 text-sm"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+                  <label className="block text-xs font-medium text-secondary-700 dark:text-secondary-300 mb-1">
                     Email Filter
                   </label>
                   <select
                     value={emailFilter}
                     onChange={(e) => setEmailFilter(e.target.value as any)}
-                    className="select"
+                    className="select text-sm"
                   >
                     <option value="all">All Guests</option>
                     <option value="with_email">With Email Only</option>
@@ -470,13 +517,13 @@ export default function GuestsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+                  <label className="block text-xs font-medium text-secondary-700 dark:text-secondary-300 mb-1">
                     Country Filter
                   </label>
                   <select
                     value={countryFilter}
                     onChange={(e) => setCountryFilter(e.target.value)}
-                    className="select"
+                    className="select text-sm"
                   >
                     <option value="all">All Countries</option>
                     {uniqueCountries.map(country => (
@@ -498,10 +545,63 @@ export default function GuestsPage() {
             loading={loading}
             emptyMessage="No guests found. Try adjusting your search terms or add new guests."
           />
-        </main>
-      </div>
 
-      {/* Modals */}
+          {/* Pagination */}
+          {pagination.totalPages > 1 && (
+            <div className="card">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-secondary-600 dark:text-secondary-400">
+                    Showing {((pagination.currentPage - 1) * 50) + 1} to {Math.min(pagination.currentPage * 50, pagination.count)} of {pagination.count.toLocaleString()} guests
+                  </span>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={goToPreviousPage}
+                    disabled={!pagination.previous}
+                    className="btn-ghost disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  
+                  <div className="flex items-center space-x-1">
+                    {/* Show page numbers */}
+                    {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                      const startPage = Math.max(1, pagination.currentPage - 2)
+                      const pageNum = startPage + i
+                      if (pageNum > pagination.totalPages) return null
+                      
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => goToPage(pageNum)}
+                          className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+                            pageNum === pagination.currentPage
+                              ? 'bg-primary-600 text-white'
+                              : 'text-secondary-600 dark:text-secondary-400 hover:bg-secondary-100 dark:hover:bg-secondary-800'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  
+                  <button
+                    onClick={goToNextPage}
+                    disabled={!pagination.next}
+                    className="btn-ghost disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+
+        {/* Modals */}
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
@@ -510,12 +610,7 @@ export default function GuestsPage() {
       >
         <GuestForm
           guest={null}
-          onSave={(guest) => {
-            setShowAddModal(false)
-            showToast('Guest added successfully!', 'success')
-            // Here you would typically call an API to save the guest
-            console.log('New guest:', guest)
-          }}
+          onSave={handleSaveGuest}
           onCancel={() => setShowAddModal(false)}
         />
       </Modal>
@@ -528,12 +623,7 @@ export default function GuestsPage() {
       >
         <GuestForm
           guest={selectedGuest}
-          onSave={(guest) => {
-            setShowEditModal(false)
-            showToast('Guest updated successfully!', 'success')
-            // Here you would typically call an API to update the guest
-            console.log('Updated guest:', guest)
-          }}
+          onSave={handleSaveGuest}
           onCancel={() => setShowEditModal(false)}
         />
       </Modal>
@@ -546,7 +636,10 @@ export default function GuestsPage() {
       >
         <div className="space-y-4">
           <p className="text-sm text-secondary-600 dark:text-secondary-400">
-            Are you sure you want to delete <strong>{selectedGuest?.name || `${selectedGuest?.first_name} ${selectedGuest?.last_name}`}</strong>? This action cannot be undone.
+            Are you sure you want to delete <strong>{selectedGuest?.first_name && selectedGuest?.last_name 
+              ? `${selectedGuest.first_name} ${selectedGuest.last_name}`.trim()
+              : selectedGuest?.first_name || 'Unknown Guest'
+            }</strong>? This action cannot be undone.
           </p>
           <div className="flex justify-end space-x-2">
             <button
@@ -556,10 +649,7 @@ export default function GuestsPage() {
               Cancel
             </button>
             <button
-              onClick={() => {
-                setShowDeleteModal(false)
-                showToast('Guest deleted successfully!', 'success')
-              }}
+              onClick={handleConfirmDelete}
               className="btn-danger"
             >
               Delete Guest
@@ -568,14 +658,34 @@ export default function GuestsPage() {
         </div>
       </Modal>
 
-      {/* Toast */}
-      {toast.show && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast({ show: false, message: '', type: 'info' })}
-        />
-      )}
+      <Modal
+        isOpen={showCheckInsModal}
+        onClose={() => setShowCheckInsModal(false)}
+        title="Guest Check-ins"
+        size="xl"
+      >
+        {selectedGuest && (
+          <GuestCheckIns
+            guestId={selectedGuest.guest_id!}
+            guestName={selectedGuest.first_name && selectedGuest.last_name 
+              ? `${selectedGuest.first_name} ${selectedGuest.last_name}`.trim()
+              : selectedGuest.first_name || 'Unknown Guest'
+            }
+            onClose={() => setShowCheckInsModal(false)}
+          />
+        )}
+      </Modal>
+
+          {/* Toast */}
+          {toast.show && (
+            <Toast
+              message={toast.message}
+              type={toast.type}
+              onClose={() => setToast({ show: false, message: '', type: 'info' })}
+            />
+          )}
+        </div>
+      </div>
     </div>
   )
 }

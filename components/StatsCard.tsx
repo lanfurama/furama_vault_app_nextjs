@@ -66,23 +66,23 @@ export default function StatsCard({
   }
 
   return (
-    <div className={`card-hover ${colors.bg}`}>
+    <div className={`card-hover ${colors.bg} p-3`}>
       <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-secondary-600 dark:text-secondary-400">
+        <div className="space-y-0.5">
+          <p className="text-xs font-medium text-secondary-600 dark:text-secondary-400">
             {title}
           </p>
-          <p className="text-2xl font-bold text-secondary-900 dark:text-secondary-100">
+          <p className="text-lg font-bold text-secondary-900 dark:text-secondary-100">
             {value}
           </p>
           {change !== undefined && (
             <div className="flex items-center space-x-1">
               {changeType === 'increase' ? (
-                <TrendingUp className="w-4 h-4 text-success-600 dark:text-success-400" />
+                <TrendingUp className="w-3 h-3 text-success-600 dark:text-success-400" />
               ) : changeType === 'decrease' ? (
-                <TrendingDown className="w-4 h-4 text-danger-600 dark:text-danger-400" />
+                <TrendingDown className="w-3 h-3 text-danger-600 dark:text-danger-400" />
               ) : null}
-              <span className={`text-sm font-medium ${
+              <span className={`text-xs font-medium ${
                 changeType === 'increase' 
                   ? 'text-success-600 dark:text-success-400' 
                   : changeType === 'decrease'
@@ -94,8 +94,8 @@ export default function StatsCard({
             </div>
           )}
         </div>
-        <div className={`p-3 rounded-xl ${colors.iconBg}`}>
-          <Icon className={`w-6 h-6 ${colors.icon}`} />
+        <div className={`p-1.5 rounded-md ${colors.iconBg}`}>
+          <Icon className={`w-4 h-4 ${colors.icon}`} />
         </div>
       </div>
     </div>

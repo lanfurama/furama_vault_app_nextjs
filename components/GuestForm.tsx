@@ -4,16 +4,19 @@ import { useState } from 'react'
 import { User, Mail, Phone, MapPin, Save, X } from 'lucide-react'
 
 interface Guest {
-  id?: number
-  name?: string
-  first_name?: string
-  last_name?: string
-  email?: string
-  phone?: string
-  country?: string
-  address?: string
-  created_at?: string
-  updated_at?: string
+  guest_id: number
+  guest_number: string
+  title: string
+  first_name: string
+  last_name: string
+  guest_type: string
+  vip_status: string
+  guest_status: string
+  email: string | null
+  phone: string | null
+  loyalty_points: number
+  loyalty_tier: string
+  created_date: string
 }
 
 interface GuestFormProps {
@@ -29,8 +32,8 @@ export default function GuestForm({ guest, onSave, onCancel, loading = false }: 
     last_name: guest?.last_name || '',
     email: guest?.email || '',
     phone: guest?.phone || '',
-    country: guest?.country || '',
-    address: guest?.address || ''
+    title: guest?.title || 'mr',
+    guest_type: guest?.guest_type || 'individual'
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -61,14 +64,13 @@ export default function GuestForm({ guest, onSave, onCancel, loading = false }: 
       return
     }
 
-    const guestData: Guest = {
-      ...guest,
+    const guestData: Partial<Guest> = {
       first_name: formData.first_name.trim(),
       last_name: formData.last_name.trim(),
-      email: formData.email.trim() || undefined,
-      phone: formData.phone.trim() || undefined,
-      country: formData.country.trim() || undefined,
-      address: formData.address.trim() || undefined
+      email: formData.email.trim() || null,
+      phone: formData.phone.trim() || null,
+      title: formData.title,
+      guest_type: formData.guest_type
     }
 
     onSave(guestData)
@@ -128,6 +130,40 @@ export default function GuestForm({ guest, onSave, onCancel, loading = false }: 
         </div>
       </div>
 
+      {/* Title and Type Fields */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+            Title
+          </label>
+          <select
+            value={formData.title}
+            onChange={(e) => handleChange('title', e.target.value)}
+            className="select"
+          >
+            <option value="mr">Mr.</option>
+            <option value="mrs">Mrs.</option>
+            <option value="ms">Ms.</option>
+            <option value="dr">Dr.</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
+            Guest Type
+          </label>
+          <select
+            value={formData.guest_type}
+            onChange={(e) => handleChange('guest_type', e.target.value)}
+            className="select"
+          >
+            <option value="individual">Individual</option>
+            <option value="corporate">Corporate</option>
+            <option value="group">Group</option>
+          </select>
+        </div>
+      </div>
+
       {/* Contact Fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -168,40 +204,6 @@ export default function GuestForm({ guest, onSave, onCancel, loading = false }: 
         </div>
       </div>
 
-      {/* Location Fields */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
-            Country
-          </label>
-          <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400" />
-            <input
-              type="text"
-              value={formData.country}
-              onChange={(e) => handleChange('country', e.target.value)}
-              className="input pl-10"
-              placeholder="Enter country"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
-            Address
-          </label>
-          <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400" />
-            <input
-              type="text"
-              value={formData.address}
-              onChange={(e) => handleChange('address', e.target.value)}
-              className="input pl-10"
-              placeholder="Enter address"
-            />
-          </div>
-        </div>
-      </div>
 
       {/* Form Actions */}
       <div className="flex justify-end space-x-3 pt-4 border-t border-secondary-200 dark:border-secondary-700">

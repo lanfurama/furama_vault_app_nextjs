@@ -46,13 +46,14 @@ export default function Sidebar({ isOpen, onToggle, darkMode, onToggleDarkMode }
       
       {/* Sidebar */}
       <div className={`
-        fixed left-0 top-0 h-full w-64 bg-white dark:bg-secondary-900 
+        h-screen w-56 bg-white dark:bg-secondary-900 
         border-r border-secondary-200 dark:border-secondary-700 
-        shadow-medium z-40 transform transition-transform duration-300 ease-in-out
+        shadow-medium transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        lg:block
       `}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-secondary-200 dark:border-secondary-700">
+        <div className="flex items-center justify-between p-4 border-b border-secondary-200 dark:border-secondary-700">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center">
               <Users className="w-5 h-5 text-white" />
@@ -75,7 +76,7 @@ export default function Sidebar({ isOpen, onToggle, darkMode, onToggleDarkMode }
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-2">
+        <nav className="flex-1 px-3 py-4 space-y-1">
           {navigation.map((item) => {
             const isActive = pathname === item.href
             return (
@@ -83,7 +84,7 @@ export default function Sidebar({ isOpen, onToggle, darkMode, onToggleDarkMode }
                 key={item.name}
                 href={item.href}
                 className={`
-                  flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+                  flex items-center space-x-2 px-2 py-2 rounded-lg text-sm font-medium transition-all duration-200
                   ${isActive 
                     ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-r-2 border-primary-500' 
                     : 'text-secondary-600 dark:text-secondary-400 hover:bg-secondary-100 dark:hover:bg-secondary-800 hover:text-secondary-900 dark:hover:text-secondary-200'

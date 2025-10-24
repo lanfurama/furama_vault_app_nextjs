@@ -44,21 +44,21 @@ A modern, enterprise-grade guest management system built with Next.js 14, TypeSc
 ### Installation
 
 1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
+```bash
+git clone <repository-url>
    cd furama_vault_app_nextjs
-   ```
+```
 
 2. **Install dependencies**
-   ```bash
-   npm install
+```bash
+npm install
    # or
    yarn install
-   ```
+```
 
 3. **Run the development server**
-   ```bash
-   npm run dev
+```bash
+npm run dev
    # or
    yarn dev
    ```

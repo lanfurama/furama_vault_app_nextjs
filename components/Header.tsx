@@ -22,8 +22,8 @@ export default function Header({ onToggleSidebar, title, subtitle }: HeaderProps
   const [showNotifications, setShowNotifications] = useState(false)
 
   return (
-    <header className="header">
-      <div className="flex items-center justify-between px-4 py-4 lg:px-6">
+    <header className="header relative z-40">
+      <div className="flex items-center justify-between px-4 py-2 lg:px-6">
         {/* Left side */}
         <div className="flex items-center space-x-4">
           <button
@@ -34,11 +34,11 @@ export default function Header({ onToggleSidebar, title, subtitle }: HeaderProps
           </button>
           
           <div>
-            <h1 className="text-xl font-semibold text-secondary-900 dark:text-secondary-100">
+            <h1 className="text-lg font-semibold text-secondary-900 dark:text-secondary-100">
               {title}
             </h1>
             {subtitle && (
-              <p className="text-sm text-secondary-500 dark:text-secondary-400">
+              <p className="text-xs text-secondary-500 dark:text-secondary-400">
                 {subtitle}
               </p>
             )}
