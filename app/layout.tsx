@@ -5,8 +5,11 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Furama Vault - Guest Management',
-  description: 'Guest management system for Furama Resort',
+  title: 'Furama Vault - Guest Management System',
+  description: 'Professional guest management system for Furama Resort with advanced analytics and reporting',
+  keywords: 'guest management, hotel management, resort, analytics, reporting',
+  authors: [{ name: 'Furama Resort' }],
+  viewport: 'width=device-width, initial-scale=1',
 }
 
 export default function RootLayout({
@@ -15,9 +18,9 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900 transition-colors duration-300">
           {children}
         </div>
       </body>

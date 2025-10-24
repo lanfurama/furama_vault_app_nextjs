@@ -1,206 +1,215 @@
-# Furama Vault - Guest Management App
+# Furama Vault - Professional Guest Management System
 
-A modern Next.js application for managing guest information with email marketing features, built for Furama Resort.
+A modern, enterprise-grade guest management system built with Next.js 14, TypeScript, and Tailwind CSS. Designed for hospitality businesses with advanced analytics, reporting, and data management capabilities.
 
-## Features
+## ✨ Features
 
-- 📋 **Guest List Display**: View all guests in a clean table format
-- 🔍 **Search & Filter**: Search by name/email, filter by email status and country
-- 📧 **Email Marketing**: Select guests for email campaigns
-- 📁 **Export Functions**: Export selected or all guests to Excel
-- ⚙️ **Settings**: Configure API URL easily
-- 📱 **Responsive Design**: Works on desktop, tablet, and mobile
-- ⚡ **Fast Performance**: Frontend pagination for smooth experience
+### 🎨 Modern UI/UX
+- **Professional Design**: Clean, modern interface optimized for business use
+- **Dark Mode**: Full dark mode support with system preference detection
+- **Responsive Layout**: Mobile-first design that works on all devices
+- **Smooth Animations**: Micro-interactions and transitions for better UX
 
-## Tech Stack
+### 📊 Dashboard & Analytics
+- **Real-time Statistics**: Live guest counts, email coverage, country distribution
+- **Interactive Charts**: Monthly trends, country analysis with Chart.js
+- **Performance Metrics**: Growth rates, registration patterns
+- **Visual Insights**: Easy-to-understand data visualization
 
-- **Next.js 14** - React framework with App Router
-- **TypeScript** - Type safety and better development experience
-- **Tailwind CSS** - Utility-first CSS framework
-- **Lucide React** - Beautiful icons
-- **XLSX** - Excel export functionality
-- **date-fns** - Date manipulation utilities
+### 👥 Guest Management
+- **Advanced Data Table**: Sortable, filterable, searchable guest list
+- **Bulk Operations**: Select multiple guests for batch actions
+- **Export Functionality**: Excel export with XLSX
+- **Real-time Search**: Instant filtering by name, email, country
 
-## Getting Started
+### 🔧 System Features
+- **API Integration**: Configurable backend API connection
+- **Error Handling**: Comprehensive error boundaries and user feedback
+- **Loading States**: Smooth loading indicators and skeleton screens
+- **Performance Optimized**: Lazy loading, efficient rendering
+
+### 📈 Reporting & Analytics
+- **Multiple Report Types**: Guest lists, email lists, country analysis
+- **Date Range Filtering**: Custom date range selection
+- **Export Options**: Various export formats and configurations
+- **Report History**: Track and download previous reports
+
+## 🚀 Getting Started
 
 ### Prerequisites
-
 - Node.js 18+ 
 - npm or yarn
-- Backend API running (configurable via Settings)
+- Backend API (optional, can use mock data)
 
 ### Installation
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd furama-vault-app-nextjs
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd furama_vault_app_nextjs
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+
+3. **Run the development server**
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
+
+4. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+### Configuration
+
+1. **API Setup**: Go to Settings page and configure your backend API URL
+2. **Theme**: Toggle between light and dark mode using the sidebar
+3. **Data**: The system will automatically fetch guest data from your API
+
+## 🏗️ Architecture
+
+### Tech Stack
+- **Framework**: Next.js 14 with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS with custom design system
+- **Icons**: Lucide React
+- **Charts**: Chart.js with react-chartjs-2
+- **Data Export**: XLSX library
+
+### Project Structure
+```
+├── app/                    # Next.js App Router
+│   ├── analytics/         # Analytics dashboard
+│   ├── reports/           # Reports generation
+│   ├── settings/          # System settings
+│   └── globals.css        # Global styles
+├── components/            # Reusable components
+│   ├── AnimatedCard.tsx   # Animated card component
+│   ├── Chart.tsx          # Chart wrapper
+│   ├── DataTable.tsx       # Advanced data table
+│   ├── ErrorBoundary.tsx  # Error handling
+│   ├── Header.tsx         # Top navigation
+│   ├── Modal.tsx          # Modal dialogs
+│   ├── Sidebar.tsx        # Side navigation
+│   ├── StatsCard.tsx      # Statistics cards
+│   └── Toast.tsx          # Notifications
+├── hooks/                 # Custom React hooks
+│   ├── useApi.ts          # API management
+│   └── useTheme.ts        # Theme management
+└── utils/                 # Utility functions
+    └── exportUtils.ts     # Data export helpers
 ```
 
-2. Install dependencies:
-```bash
-npm install
-```
+## 🎨 Design System
 
-3. Run the development server:
-```bash
-npm run dev
-```
+### Color Palette
+- **Primary**: Blue tones for main actions
+- **Secondary**: Gray tones for neutral elements  
+- **Success**: Green for positive actions
+- **Warning**: Orange for caution
+- **Danger**: Red for errors/destructive actions
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+### Components
+- **Cards**: Elevated containers with hover effects
+- **Buttons**: Multiple variants (primary, secondary, outline, ghost)
+- **Forms**: Consistent input styling with focus states
+- **Tables**: Sortable, filterable data tables
+- **Modals**: Accessible modal dialogs
+- **Toasts**: Non-intrusive notifications
 
-5. Go to Settings to configure your API URL.
+## 📱 Responsive Design
 
-## API Integration
+- **Mobile**: Optimized for phones (320px+)
+- **Tablet**: Enhanced layout for tablets (768px+)
+- **Desktop**: Full-featured desktop experience (1024px+)
+- **Large Screens**: Maximum content width with proper spacing (1280px+)
 
-The app connects to your backend API. Configure the API URL in Settings page.
+## 🔧 Customization
 
-**Expected API Endpoint**: `GET /api/v1/guest/`
+### Theme Customization
+Edit `tailwind.config.js` to modify:
+- Color schemes
+- Typography
+- Spacing
+- Animations
+- Component styles
 
-**Expected Response Format**:
-```json
-{
-  "data": [
-    {
-      "id": 1,
-      "name": "John Doe",
-      "first_name": "John",
-      "last_name": "Doe", 
-      "email": "john@example.com",
-      "country": "Vietnam",
-      "created_at": "2024-01-01T00:00:00Z",
-      "updated_at": "2024-01-01T00:00:00Z"
-    }
-  ]
+### Component Customization
+All components are built with Tailwind classes and can be easily customized by:
+- Modifying className props
+- Extending component props
+- Creating new variants
+
+## 📊 API Integration
+
+### Expected API Structure
+```typescript
+interface Guest {
+  id: number
+  name?: string
+  first_name?: string
+  last_name?: string
+  email?: string
+  country?: string
+  created_at?: string
+  updated_at?: string
 }
 ```
 
-## Deployment on Vercel
+### API Endpoints
+- `GET /api/guests` - Fetch all guests
+- `GET /api/test-connection` - Test API connection
 
-### Method 1: Vercel CLI (Recommended)
+## 🚀 Deployment
 
-1. **Install Vercel CLI** (if not already installed):
-```bash
-npm install -g vercel
-```
+### Vercel (Recommended)
+1. Connect your GitHub repository to Vercel
+2. Configure environment variables if needed
+3. Deploy automatically on push to main branch
 
-2. **Login to Vercel**:
-```bash
-vercel login
-```
+### Other Platforms
+- **Netlify**: Compatible with Next.js static export
+- **AWS**: Use AWS Amplify or custom server setup
+- **Docker**: Create Dockerfile for containerized deployment
 
-3. **Deploy from your project directory**:
-```bash
-vercel
-```
-
-4. **Follow the prompts**:
-   - Set up and deploy? `Y`
-   - Which scope? (Choose your account)
-   - Link to existing project? `N`
-   - What's your project's name? `furama-vault-app`
-   - In which directory is your code located? `./`
-
-5. **Set Environment Variables** (if needed):
-```bash
-vercel env add API_BASE_URL
-```
-
-### Method 2: Vercel Dashboard
-
-1. **Push to GitHub**:
-```bash
-git add .
-git commit -m "Ready for deployment"
-git push origin main
-```
-
-2. **Go to [vercel.com](https://vercel.com)**
-3. **Click "New Project"**
-4. **Import from GitHub** - Select your repository
-5. **Configure**:
-   - Framework Preset: `Next.js`
-   - Root Directory: `./`
-   - Build Command: `npm run build`
-   - Output Directory: `.next`
-6. **Deploy**
-
-### Environment Variables
-
-Set these in Vercel dashboard or via CLI:
-
-- `API_BASE_URL`: Your production backend URL (optional, can be configured in Settings)
-
-## Project Structure
-
-```
-├── app/
-│   ├── api/
-│   │   ├── guests/route.ts           # API route for fetching guests
-│   │   └── test-connection/route.ts   # API route for testing connection
-│   ├── settings/page.tsx             # Settings page
-│   ├── globals.css                   # Global styles
-│   ├── layout.tsx                    # Root layout
-│   └── page.tsx                      # Home page
-├── components/
-│   └── LoadingSpinner.tsx            # Loading spinner
-├── utils/
-│   └── exportUtils.ts                # Excel export utilities
-├── public/                           # Static assets
-├── next.config.js                    # Next.js configuration
-├── tailwind.config.js                 # Tailwind configuration
-├── tsconfig.json                     # TypeScript configuration
-├── vercel.json                       # Vercel deployment configuration
-└── .vercelignore                     # Vercel ignore file
-```
-
-## Usage
-
-### For Email Marketing
-
-1. **Configure API**: Go to Settings → Enter your API URL → Test Connection → Save
-2. **Filter Guests**: Use Email Filter to show only guests with email
-3. **Select Recipients**: Check guests you want to include in email campaign
-4. **Export**: Click "Export Selected" to download Excel file
-5. **Use for Marketing**: Import Excel file into your email marketing tool
-
-### Features
-
-- **Settings Page**: Configure API URL easily
-- **Email Filtering**: Filter by email status (All/With Email/Without Email)
-- **Country Filtering**: Filter by specific country
-- **Search**: Search by name or email
-- **Bulk Selection**: Select all or individual guests
-- **Export Options**: Export selected guests or all guests
-- **Frontend Pagination**: Smooth navigation through large datasets
-
-## Troubleshooting
-
-### Common Issues
-
-1. **API Connection Failed**
-   - Check your API URL in Settings
-   - Ensure your backend API is running
-   - Verify CORS settings on your backend
-
-2. **Build Errors**
-   - Run `npm run lint` to check for linting issues
-   - Ensure all dependencies are installed
-   - Check TypeScript errors
-
-3. **Deployment Issues**
-   - Check build logs in Vercel dashboard
-   - Ensure all environment variables are set
-   - Verify your API is accessible from Vercel
-
-## Contributing
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## License
+## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
+
+For support and questions:
+- Create an issue in the repository
+- Check the documentation
+- Review the code comments
+
+## 🔮 Future Enhancements
+
+- [ ] Real-time notifications
+- [ ] Advanced filtering options
+- [ ] Guest profile management
+- [ ] Email marketing integration
+- [ ] Multi-language support
+- [ ] Advanced analytics dashboard
+- [ ] API rate limiting
+- [ ] Data backup/restore
+- [ ] User authentication
+- [ ] Role-based access control
+
+---
+
+Built with ❤️ for the hospitality industry
