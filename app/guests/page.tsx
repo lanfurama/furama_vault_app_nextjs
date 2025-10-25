@@ -151,8 +151,8 @@ export default function GuestsPage() {
 
 
   const handleExportAll = () => {
-    const filename = exportToExcel(guests, 'all_guests_export')
-    showToast(`Exported all ${guests.length} guests to ${filename}`, 'success')
+    const filename = exportToExcel(filteredGuests, 'filtered_guests_export')
+    showToast(`Exported ${filteredGuests.length} filtered guests to ${filename}`, 'success')
   }
 
 
@@ -372,16 +372,17 @@ export default function GuestsPage() {
   ]
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'dark' : ''}`}>
-      <div className="flex min-h-screen">
-        <Sidebar 
-          isOpen={sidebarOpen} 
-          onToggle={() => setSidebarOpen(!sidebarOpen)}
-          darkMode={darkMode}
-          onToggleDarkMode={toggleDarkMode}
-        />
-        
-        <div className="flex-1 flex flex-col">
+    <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900 transition-colors duration-300">
+      {/* Sidebar */}
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        darkMode={darkMode}
+        onToggleDarkMode={toggleDarkMode}
+      />
+
+      {/* Main Content */}
+      <div className="main-content">
           <Header 
             onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
             title="Guest Management"
@@ -416,7 +417,7 @@ export default function GuestsPage() {
                   className="btn-primary flex items-center space-x-2"
                 >
                   <Download className="h-4 w-4" />
-                  <span>Export All</span>
+                  <span>Export Filtered</span>
                 </button>
                 <button
                   onClick={refreshGuests}
@@ -603,15 +604,14 @@ export default function GuestsPage() {
         )}
       </Modal>
 
-          {/* Toast */}
-          {toast.show && (
-            <Toast
-              message={toast.message}
-              type={toast.type}
-              onClose={() => setToast({ show: false, message: '', type: 'info' })}
-            />
-          )}
-        </div>
+        {/* Toast */}
+        {toast.show && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast({ show: false, message: '', type: 'info' })}
+          />
+        )}
       </div>
     </div>
   )
