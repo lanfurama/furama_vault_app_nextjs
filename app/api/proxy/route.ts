@@ -37,6 +37,18 @@ export async function GET(request: NextRequest) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
 
+    // Check if this is an export endpoint (returns binary data)
+    if (endpoint.includes('export_excel')) {
+      const buffer = await response.arrayBuffer()
+      return new NextResponse(buffer, {
+        headers: {
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'Content-Disposition': 'attachment; filename="guests_export.xlsx"',
+        },
+      })
+    }
+
+    // For regular JSON endpoints
     const data = await response.json()
     return NextResponse.json(data)
   } catch (error) {

@@ -175,15 +175,77 @@ export default function GuestsPage() {
   }
 
 
-  const handleExportWithEmail = () => {
-    const guestsWithEmail = filteredGuests.filter(guest => guest.email && guest.email.trim() !== '')
-    const filename = exportToExcel(guestsWithEmail, 'guests_with_email_export')
-    showToast(`Exported ${guestsWithEmail.length} guests with email to ${filename}`, 'success')
-  }
-
-  const handleExportAll = () => {
-    const filename = exportToExcel(filteredGuests, 'all_filtered_guests_export')
-    showToast(`Exported all ${filteredGuests.length} filtered guests to ${filename}`, 'success')
+  const handleExportExcel = async () => {
+    try {
+      // Show loading state via toast
+      showToast('Preparing export...', 'info')
+      
+      // Build query parameters based on current filters
+      const params = new URLSearchParams()
+      
+      // Add email filter
+      if (emailFilter === 'with_email') {
+        params.append('has_email', 'true')
+      } else if (emailFilter === 'without_email') {
+        params.append('has_email', 'false')
+      }
+      
+      // Add nationality filter
+      if (countryFilter !== 'all') {
+        params.append('nationality', countryFilter)
+      }
+      
+      // Add search term if exists
+      if (searchTerm) {
+        params.append('search', searchTerm)
+      }
+      
+      // Build the export URL
+      const exportUrl = `/api/proxy?endpoint=/api/v1/guests/guests/export_excel/${params.toString() ? `?${params.toString()}` : ''}`
+      
+      console.log('📤 Export URL:', exportUrl)
+      
+      // Make the API call
+      const response = await fetch(exportUrl)
+      
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.status}`)
+      }
+      
+      // Get the blob from response
+      const blob = await response.blob()
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      
+      // Generate filename with current filters
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-')
+      let filename = `guests_export_${timestamp}.xlsx`
+      
+      if (emailFilter !== 'all' || countryFilter !== 'all') {
+        const filterParts = []
+        if (emailFilter === 'with_email') filterParts.push('with_email')
+        if (emailFilter === 'without_email') filterParts.push('without_email')
+        if (countryFilter !== 'all') filterParts.push(countryFilter.replace(/[^a-zA-Z0-9]/g, '_'))
+        filename = `guests_${filterParts.join('_')}_${timestamp}.xlsx`
+      }
+      
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      
+      showToast(`Excel file exported successfully: ${filename}`, 'success')
+      
+    } catch (error) {
+      console.error('Export error:', error)
+      showToast('Failed to export Excel file', 'error')
+    } finally {
+      // Loading state handled by toast messages
+    }
   }
 
 
@@ -405,13 +467,13 @@ export default function GuestsPage() {
   return (
     <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900 transition-colors duration-300">
       {/* Sidebar */}
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-        darkMode={darkMode}
-        onToggleDarkMode={toggleDarkMode}
-      />
-
+        <Sidebar 
+          isOpen={sidebarOpen} 
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
+          darkMode={darkMode}
+          onToggleDarkMode={toggleDarkMode}
+        />
+        
       {/* Main Content */}
       <div className="main-content">
           <Header 
@@ -443,20 +505,6 @@ export default function GuestsPage() {
               </div>
               
               <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={handleExportWithEmail}
-                  className="btn-success flex items-center space-x-2"
-                >
-                  <Mail className="h-4 w-4" />
-                  <span>Export With Email</span>
-                </button>
-                <button
-                  onClick={handleExportAll}
-                  className="btn-primary flex items-center space-x-2"
-                >
-                  <Download className="h-4 w-4" />
-                  <span>Export All</span>
-                </button>
                 <button
                   onClick={refreshGuests}
                   className="btn-ghost flex items-center space-x-2"
@@ -512,6 +560,19 @@ export default function GuestsPage() {
                   </select>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Export Button */}
+          <div className="card">
+            <div className="flex justify-center">
+              <button
+                onClick={handleExportExcel}
+                className="btn-primary flex items-center space-x-2"
+              >
+                <Download className="h-4 w-4" />
+                <span>Export Excel</span>
+              </button>
             </div>
           </div>
 
@@ -642,14 +703,14 @@ export default function GuestsPage() {
         )}
       </Modal>
 
-        {/* Toast */}
-        {toast.show && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={() => setToast({ show: false, message: '', type: 'info' })}
-          />
-        )}
+          {/* Toast */}
+          {toast.show && (
+            <Toast
+              message={toast.message}
+              type={toast.type}
+              onClose={() => setToast({ show: false, message: '', type: 'info' })}
+            />
+          )}
       </div>
     </div>
   )
