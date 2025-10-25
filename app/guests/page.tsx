@@ -5,8 +5,6 @@ import {
   Users, 
   Search, 
   Download, 
-  Edit, 
-  Trash2, 
   Eye,
   Mail,
   Phone,
@@ -18,7 +16,6 @@ import Header from '@/components/Header'
 import DataTable from '@/components/DataTable'
 import Modal from '@/components/Modal'
 import Toast from '@/components/Toast'
-import GuestForm from '@/components/GuestForm'
 import GuestCheckIns from '@/components/GuestCheckIns'
 import { useGuests } from '@/hooks/useGuests'
 import { exportToExcel } from '@/utils/exportUtils'
@@ -56,8 +53,6 @@ export default function GuestsPage() {
   const [countryFilter, setCountryFilter] = useState<string>('all')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(false)
-  const [showEditModal, setShowEditModal] = useState(false)
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showCheckInsModal, setShowCheckInsModal] = useState(false)
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null)
   const [toast, setToast] = useState<ToastState>({ show: false, message: '', type: 'info' })
@@ -156,62 +151,12 @@ export default function GuestsPage() {
   }
 
 
-  const handleEditGuest = (guest: Guest) => {
-    setSelectedGuest(guest)
-    setShowEditModal(true)
-  }
-
-  const handleDeleteGuest = (guest: Guest) => {
-    setSelectedGuest(guest)
-    setShowDeleteModal(true)
-  }
 
   const handleViewCheckIns = (guest: Guest) => {
     setSelectedGuest(guest)
     setShowCheckInsModal(true)
   }
 
-  const handleSaveGuest = async (guestData: Partial<Guest>) => {
-    try {
-      if (selectedGuest) {
-        // Update existing guest
-        const updatedGuest = await updateGuest(selectedGuest.guest_id!, guestData)
-        if (updatedGuest) {
-          showToast('Guest updated successfully!', 'success')
-          setShowEditModal(false)
-        } else {
-          showToast('Failed to update guest', 'error')
-        }
-      } else {
-        // Create new guest
-        const newGuest = await createGuest(guestData)
-        if (newGuest) {
-          showToast('Guest added successfully!', 'success')
-          setShowAddModal(false)
-        } else {
-          showToast('Failed to add guest', 'error')
-        }
-      }
-    } catch (error) {
-      showToast('An error occurred while saving guest', 'error')
-    }
-  }
-
-  const handleConfirmDelete = async () => {
-    if (!selectedGuest?.guest_id) return
-
-    try {
-      const success = await deleteGuest(selectedGuest.guest_id)
-      if (success) {
-        showToast('Guest deleted successfully!', 'success')
-        setShowDeleteModal(false)
-      } else {
-        showToast('Failed to delete guest', 'error')
-      }
-    } catch (error) {
-      showToast('An error occurred while deleting guest', 'error')
-    }
-  }
 
   const showToast = (message: string, type: ToastState['type']) => {
     setToast({ show: true, message, type })
@@ -351,20 +296,6 @@ export default function GuestsPage() {
             title="View check-ins"
           >
             <Eye className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => handleEditGuest(row)}
-            className="p-2 text-secondary-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-            title="Edit guest"
-          >
-            <Edit className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => handleDeleteGuest(row)}
-            className="p-2 text-secondary-400 hover:text-danger-600 dark:hover:text-danger-400 transition-colors"
-            title="Delete guest"
-          >
-            <Trash2 className="w-4 h-4" />
           </button>
         </div>
       )
@@ -542,48 +473,6 @@ export default function GuestsPage() {
 
         {/* Modals */}
 
-      <Modal
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        title="Edit Guest"
-        size="lg"
-      >
-        <GuestForm
-          guest={selectedGuest}
-          onSave={handleSaveGuest}
-          onCancel={() => setShowEditModal(false)}
-        />
-      </Modal>
-
-      <Modal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        title="Delete Guest"
-        size="sm"
-      >
-        <div className="space-y-4">
-          <p className="text-sm text-secondary-600 dark:text-secondary-400">
-            Are you sure you want to delete <strong>{selectedGuest?.first_name && selectedGuest?.last_name 
-              ? `${selectedGuest.first_name} ${selectedGuest.last_name}`.trim()
-              : selectedGuest?.first_name || 'Unknown Guest'
-            }</strong>? This action cannot be undone.
-          </p>
-          <div className="flex justify-end space-x-2">
-            <button
-              onClick={() => setShowDeleteModal(false)}
-              className="btn-secondary"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleConfirmDelete}
-              className="btn-danger"
-            >
-              Delete Guest
-            </button>
-          </div>
-        </div>
-      </Modal>
 
       <Modal
         isOpen={showCheckInsModal}
