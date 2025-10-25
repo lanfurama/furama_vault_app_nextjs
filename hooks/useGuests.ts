@@ -8,10 +8,11 @@ interface UseGuestsOptions {
   searchTerm?: string
   propertyId?: number
   hasEmail?: boolean
+  nationality?: string
 }
 
 export function useGuests(options: UseGuestsOptions = {}) {
-  const { autoFetch = true, searchTerm = '', propertyId, hasEmail } = options
+  const { autoFetch = true, searchTerm = '', propertyId, hasEmail, nationality } = options
   
   const [guests, setGuests] = useState<Guest[]>([])
   const [loading, setLoading] = useState(false)
@@ -26,7 +27,7 @@ export function useGuests(options: UseGuestsOptions = {}) {
 
   const fetchGuests = useCallback(async (page = 1, search = searchTerm) => {
     try {
-      console.log('🔄 fetchGuests called:', { page, search, hasEmail, propertyId })
+      console.log('🔄 fetchGuests called:', { page, search, hasEmail, nationality, propertyId })
       setLoading(true)
       setError(null)
       
@@ -34,7 +35,8 @@ export function useGuests(options: UseGuestsOptions = {}) {
         page,
         search: search || undefined,
         property_id: propertyId,
-        has_email: hasEmail
+        has_email: hasEmail,
+        nationality: nationality
       })
       
       setGuests(response.results)
@@ -56,7 +58,7 @@ export function useGuests(options: UseGuestsOptions = {}) {
     } finally {
       setLoading(false)
     }
-  }, [searchTerm, propertyId, hasEmail])
+  }, [searchTerm, propertyId, hasEmail, nationality])
 
   const searchGuests = useCallback(async (search: string) => {
     try {
@@ -169,31 +171,31 @@ export function useGuests(options: UseGuestsOptions = {}) {
 
   const refreshGuests = useCallback(() => {
     fetchGuests(pagination.currentPage, searchTerm)
-  }, [pagination.currentPage, searchTerm, hasEmail, propertyId])
+  }, [pagination.currentPage, searchTerm, hasEmail, nationality, propertyId])
 
   const goToPage = useCallback((page: number) => {
     fetchGuests(page, searchTerm)
-  }, [searchTerm, hasEmail, propertyId])
+  }, [searchTerm, hasEmail, nationality, propertyId])
 
   const goToNextPage = useCallback(() => {
     if (pagination.next) {
       fetchGuests(pagination.currentPage + 1, searchTerm)
     }
-  }, [pagination.next, pagination.currentPage, searchTerm, hasEmail, propertyId])
+  }, [pagination.next, pagination.currentPage, searchTerm, hasEmail, nationality, propertyId])
 
   const goToPreviousPage = useCallback(() => {
     if (pagination.previous) {
       fetchGuests(pagination.currentPage - 1, searchTerm)
     }
-  }, [pagination.previous, pagination.currentPage, searchTerm, hasEmail, propertyId])
+  }, [pagination.previous, pagination.currentPage, searchTerm, hasEmail, nationality, propertyId])
 
   // Auto-fetch on mount and when dependencies change
   useEffect(() => {
-    console.log('🔄 useEffect triggered:', { autoFetch, hasEmail, searchTerm, propertyId })
+    console.log('🔄 useEffect triggered:', { autoFetch, hasEmail, nationality, searchTerm, propertyId })
     if (autoFetch) {
       fetchGuests()
     }
-  }, [autoFetch, hasEmail, searchTerm, propertyId])
+  }, [autoFetch, hasEmail, nationality, searchTerm, propertyId])
 
   return {
     guests,

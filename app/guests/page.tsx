@@ -80,7 +80,8 @@ export default function GuestsPage() {
   } = useGuests({ 
     autoFetch: true, 
     searchTerm,
-    hasEmail: emailFilter === 'with_email' ? true : emailFilter === 'without_email' ? false : undefined
+    hasEmail: emailFilter === 'with_email' ? true : emailFilter === 'without_email' ? false : undefined,
+    nationality: countryFilter === 'all' ? undefined : countryFilter
   })
 
   // Dark mode handling
@@ -142,12 +143,20 @@ export default function GuestsPage() {
   const guestsWithoutEmail = guests.length - guestsWithEmail
   const uniqueNationalities = Array.from(new Set(guests.map(guest => guest.nationality || 'Unknown').filter(Boolean)))
 
-  // Apply client-side filters (nationality filter only, email and search are handled by server)
-  const filteredGuests = guests?.filter(guest => {
-    const matchesNationalityFilter = countryFilter === 'all' || guest.nationality === countryFilter
-    
-    return matchesNationalityFilter
-  }) || []
+  // No client-side filtering needed - all filtering is done via API parameters
+  const filteredGuests = guests
+  
+  // Debug logging
+  console.log('🔍 Debug - Guests data:', {
+    guests: guests?.length || 0,
+    filteredGuests: filteredGuests?.length || 0,
+    loading,
+    error,
+    pagination,
+    emailFilter,
+    countryFilter,
+    guestsData: guests?.slice(0, 2) // Show first 2 guests for debugging
+  })
 
   const handleSelectGuest = (guestId: number) => {
     setSelectedGuests(prev => 
