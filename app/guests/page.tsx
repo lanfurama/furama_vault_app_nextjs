@@ -187,7 +187,7 @@ export default function GuestsPage() {
         const newGuest = await createGuest(guestData)
         if (newGuest) {
           showToast('Guest added successfully!', 'success')
-          setShowAddModal(false)
+          setShowEditModal(false)
         } else {
           showToast('Failed to add guest', 'error')
         }
