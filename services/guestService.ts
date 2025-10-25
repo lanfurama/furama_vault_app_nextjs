@@ -16,6 +16,7 @@ export interface Guest {
   created_date: string
   checkin_day?: string
   departure_date?: string
+  nationality?: string
 }
 
 export interface GuestResponse {

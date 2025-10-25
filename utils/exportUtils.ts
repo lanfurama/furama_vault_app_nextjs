@@ -14,6 +14,7 @@ interface Guest {
   loyalty_points: number
   loyalty_tier: string
   created_date: string
+  nationality?: string
 }
 
 export const exportToExcel = (guests: Guest[], filename: string = 'guests_export') => {

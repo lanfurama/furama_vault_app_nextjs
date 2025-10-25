@@ -40,6 +40,7 @@ interface Guest {
   created_date: string
   checkin_day?: string
   departure_date?: string
+  nationality?: string
 }
 
 interface ToastState {
@@ -120,17 +121,32 @@ export default function GuestsPage() {
   //   refreshGuests()
   // }, [emailFilter, refreshGuests])
 
+  // List of nationalities for filter (matching API response values)
+  const nationalities = [
+    'Vietnam', 'Korea, Republic Of', 'China', 'Japan', 'Thailand', 'Singapore', 
+    'Malaysia', 'Indonesia', 'Philippines', 'Taiwan', 'Hong Kong', 'Macau', 
+    'Cambodia', 'Laos', 'Myanmar', 'Brunei', 'Australia', 'New Zealand', 
+    'United States', 'Canada', 'Great Britain', 'France', 'Germany', 'Italy', 
+    'Spain', 'Netherlands', 'Switzerland', 'Austria', 'Belgium', 'Sweden', 
+    'Norway', 'Denmark', 'Finland', 'Russia', 'India', 'Pakistan', 'Bangladesh', 
+    'Sri Lanka', 'Nepal', 'Bhutan', 'Maldives', 'Afghanistan', 'Iran', 'Iraq', 
+    'Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Bahrain', 'Oman', 'Jordan', 
+    'Lebanon', 'Syria', 'Turkey', 'Israel', 'Egypt', 'South Africa', 'Nigeria', 
+    'Kenya', 'Morocco', 'Tunisia', 'Algeria', 'Brazil', 'Argentina', 'Chile', 
+    'Colombia', 'Peru', 'Venezuela', 'Mexico', 'Greece', 'Other'
+  ]
+
   // Calculate statistics
   const totalGuests = pagination.count || guests.length
   const guestsWithEmail = guests.filter(guest => guest.email && guest.email.trim() !== '').length
   const guestsWithoutEmail = guests.length - guestsWithEmail
-  const uniqueCountries = Array.from(new Set(guests.map(guest => guest.first_name).filter(Boolean)))
+  const uniqueNationalities = Array.from(new Set(guests.map(guest => guest.nationality || 'Unknown').filter(Boolean)))
 
-  // Apply client-side filters (country filter only, email and search are handled by server)
+  // Apply client-side filters (nationality filter only, email and search are handled by server)
   const filteredGuests = guests?.filter(guest => {
-    const matchesCountryFilter = countryFilter === 'all' || guest.first_name === countryFilter
+    const matchesNationalityFilter = countryFilter === 'all' || guest.nationality === countryFilter
     
-    return matchesCountryFilter
+    return matchesNationalityFilter
   }) || []
 
   const handleSelectGuest = (guestId: number) => {
@@ -473,16 +489,16 @@ export default function GuestsPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-secondary-700 dark:text-secondary-300 mb-1">
-                    Country Filter
+                    Nationality Filter
                   </label>
                   <select
                     value={countryFilter}
                     onChange={(e) => setCountryFilter(e.target.value)}
                     className="select text-sm"
                   >
-                    <option value="all">All Countries</option>
-                    {uniqueCountries.map(country => (
-                      <option key={country} value={country}>{country}</option>
+                    <option value="all">All Nationalities</option>
+                    {nationalities.map(nationality => (
+                      <option key={nationality} value={nationality}>{nationality}</option>
                     ))}
                   </select>
                 </div>
