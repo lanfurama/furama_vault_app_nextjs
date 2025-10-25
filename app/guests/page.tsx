@@ -150,9 +150,15 @@ export default function GuestsPage() {
   }
 
 
+  const handleExportWithEmail = () => {
+    const guestsWithEmail = filteredGuests.filter(guest => guest.email && guest.email.trim() !== '')
+    const filename = exportToExcel(guestsWithEmail, 'guests_with_email_export')
+    showToast(`Exported ${guestsWithEmail.length} guests with email to ${filename}`, 'success')
+  }
+
   const handleExportAll = () => {
-    const filename = exportToExcel(filteredGuests, 'filtered_guests_export')
-    showToast(`Exported ${filteredGuests.length} filtered guests to ${filename}`, 'success')
+    const filename = exportToExcel(filteredGuests, 'all_filtered_guests_export')
+    showToast(`Exported all ${filteredGuests.length} filtered guests to ${filename}`, 'success')
   }
 
 
@@ -413,11 +419,18 @@ export default function GuestsPage() {
               
               <div className="flex flex-wrap gap-2">
                 <button
+                  onClick={handleExportWithEmail}
+                  className="btn-success flex items-center space-x-2"
+                >
+                  <Mail className="h-4 w-4" />
+                  <span>Export With Email</span>
+                </button>
+                <button
                   onClick={handleExportAll}
                   className="btn-primary flex items-center space-x-2"
                 >
                   <Download className="h-4 w-4" />
-                  <span>Export Filtered</span>
+                  <span>Export All</span>
                 </button>
                 <button
                   onClick={refreshGuests}
