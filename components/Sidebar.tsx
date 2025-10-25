@@ -44,7 +44,7 @@ export default function Sidebar({ isOpen, onToggle, darkMode, onToggleDarkMode }
       
       {/* Sidebar */}
       <div className={`
-        h-screen w-56 bg-white dark:bg-secondary-900 
+        h-screen w-64 bg-white dark:bg-secondary-900 
         border-r border-secondary-200 dark:border-secondary-700 
         shadow-medium transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
