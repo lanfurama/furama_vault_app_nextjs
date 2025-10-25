@@ -37,6 +37,7 @@ interface Guest {
   created_date: string
   checkin_day?: string
   departure_date?: string
+  nationality?: string
 }
 
 interface ToastState {
@@ -74,7 +75,8 @@ export default function GuestsPage() {
   } = useGuests({ 
     autoFetch: true, 
     searchTerm,
-    hasEmail: emailFilter === 'with_email' ? true : emailFilter === 'without_email' ? false : undefined
+    hasEmail: emailFilter === 'with_email' ? true : emailFilter === 'without_email' ? false : undefined,
+    nationality: countryFilter === 'all' ? undefined : countryFilter
   })
 
   // Dark mode handling
@@ -115,18 +117,26 @@ export default function GuestsPage() {
   //   refreshGuests()
   // }, [emailFilter, refreshGuests])
 
-  // Calculate statistics
-  const totalGuests = pagination.count || guests.length
-  const guestsWithEmail = guests.filter(guest => guest.email && guest.email.trim() !== '').length
-  const guestsWithoutEmail = guests.length - guestsWithEmail
-  const uniqueCountries = Array.from(new Set(guests.map(guest => guest.first_name).filter(Boolean)))
+  // List of nationalities for filter (matching API response values)
+  const nationalities = [
+    'Vietnam', 'Korea, Republic Of', 'China', 'Japan', 'Thailand', 'Singapore', 
+    'Malaysia', 'Indonesia', 'Philippines', 'Taiwan', 'Hong Kong', 'Macau', 
+    'Cambodia', 'Laos', 'Myanmar', 'Brunei', 'Australia', 'New Zealand', 
+    'United States', 'Canada', 'Great Britain', 'France', 'Germany', 'Italy', 
+    'Spain', 'Netherlands', 'Switzerland', 'Austria', 'Belgium', 'Sweden', 
+    'Norway', 'Denmark', 'Finland', 'Russia', 'India', 'Pakistan', 'Bangladesh', 
+    'Sri Lanka', 'Nepal', 'Bhutan', 'Maldives', 'Afghanistan', 'Iran', 'Iraq', 
+    'Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Bahrain', 'Oman', 'Jordan', 
+    'Lebanon', 'Syria', 'Turkey', 'Israel', 'Egypt', 'South Africa', 'Nigeria', 
+    'Kenya', 'Morocco', 'Tunisia', 'Algeria', 'Brazil', 'Argentina', 'Chile', 
+    'Colombia', 'Peru', 'Venezuela', 'Mexico', 'Greece', 'Other'
+  ]
 
-  // Apply client-side filters (country filter only, email and search are handled by server)
-  const filteredGuests = guests?.filter(guest => {
-    const matchesCountryFilter = countryFilter === 'all' || guest.first_name === countryFilter
-    
-    return matchesCountryFilter
-  }) || []
+  // Calculate statistics
+
+  // No client-side filtering needed - all filtering is done via API parameters
+  const filteredGuests = guests
+  
 
   const handleSelectGuest = (guestId: number) => {
     setSelectedGuests(prev => 
@@ -145,9 +155,77 @@ export default function GuestsPage() {
   }
 
 
-  const handleExportAll = () => {
-    const filename = exportToExcel(guests, 'all_guests_export')
-    showToast(`Exported all ${guests.length} guests to ${filename}`, 'success')
+  const handleExportExcel = async () => {
+    try {
+      // Show loading state via toast
+      showToast('Preparing export...', 'info')
+      
+      // Build query parameters based on current filters
+      const params = new URLSearchParams()
+      
+      // Add email filter
+      if (emailFilter === 'with_email') {
+        params.append('has_email', 'true')
+      } else if (emailFilter === 'without_email') {
+        params.append('has_email', 'false')
+      }
+      
+      // Add nationality filter
+      if (countryFilter !== 'all') {
+        params.append('nationality', countryFilter)
+      }
+      
+      // Add search term if exists
+      if (searchTerm) {
+        params.append('search', searchTerm)
+      }
+      
+      // Build the export URL
+      const exportUrl = `/api/proxy?endpoint=/api/v1/guests/guests/export_excel/${params.toString() ? `?${params.toString()}` : ''}`
+      
+      console.log('📤 Export URL:', exportUrl)
+      
+      // Make the API call
+      const response = await fetch(exportUrl)
+      
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.status}`)
+      }
+      
+      // Get the blob from response
+      const blob = await response.blob()
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      
+      // Generate filename with current filters
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-')
+      let filename = `guests_export_${timestamp}.xlsx`
+      
+      if (emailFilter !== 'all' || countryFilter !== 'all') {
+        const filterParts = []
+        if (emailFilter === 'with_email') filterParts.push('with_email')
+        if (emailFilter === 'without_email') filterParts.push('without_email')
+        if (countryFilter !== 'all') filterParts.push(countryFilter.replace(/[^a-zA-Z0-9]/g, '_'))
+        filename = `guests_${filterParts.join('_')}_${timestamp}.xlsx`
+      }
+      
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      
+      showToast(`Excel file exported successfully: ${filename}`, 'success')
+      
+    } catch (error) {
+      console.error('Export error:', error)
+      showToast('Failed to export Excel file', 'error')
+    } finally {
+      // Loading state handled by toast messages
+    }
   }
 
 
@@ -157,6 +235,50 @@ export default function GuestsPage() {
     setShowCheckInsModal(true)
   }
 
+<<<<<<< HEAD
+=======
+  const handleSaveGuest = async (guestData: Partial<Guest>) => {
+    try {
+      if (selectedGuest) {
+        // Update existing guest
+        const updatedGuest = await updateGuest(selectedGuest.guest_id!, guestData)
+        if (updatedGuest) {
+          showToast('Guest updated successfully!', 'success')
+          setShowEditModal(false)
+        } else {
+          showToast('Failed to update guest', 'error')
+        }
+      } else {
+        // Create new guest
+        const newGuest = await createGuest(guestData)
+        if (newGuest) {
+          showToast('Guest added successfully!', 'success')
+          setShowEditModal(false)
+        } else {
+          showToast('Failed to add guest', 'error')
+        }
+      }
+    } catch (error) {
+      showToast('An error occurred while saving guest', 'error')
+    }
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!selectedGuest?.guest_id) return
+
+    try {
+      const success = await deleteGuest(selectedGuest.guest_id)
+      if (success) {
+        showToast('Guest deleted successfully!', 'success')
+        setShowDeleteModal(false)
+      } else {
+        showToast('Failed to delete guest', 'error')
+      }
+    } catch (error) {
+      showToast('An error occurred while deleting guest', 'error')
+    }
+  }
+>>>>>>> 0eeb0a7a005616dd7938f4334a69dca43d95a8ed
 
   const showToast = (message: string, type: ToastState['type']) => {
     setToast({ show: true, message, type })
@@ -217,74 +339,6 @@ export default function GuestsPage() {
       )
     },
     {
-      key: 'phone',
-      label: 'Phone',
-      sortable: true,
-      render: (value: any, row: Guest) => (
-        <div className="flex items-center space-x-2">
-          <Phone className="w-4 h-4 text-secondary-400" />
-          <span className="text-sm text-secondary-900 dark:text-secondary-100">
-            {row.phone || 'No Phone'}
-          </span>
-        </div>
-      )
-    },
-    {
-      key: 'guest_type',
-      label: 'Type',
-      sortable: true,
-      render: (value: any, row: Guest) => (
-        <div className="flex items-center space-x-2">
-          <Users className="w-4 h-4 text-secondary-400" />
-          <span className="text-sm text-secondary-900 dark:text-secondary-100">
-            {row.guest_type || 'N/A'}
-          </span>
-        </div>
-      )
-    },
-    {
-      key: 'loyalty_tier',
-      label: 'Loyalty',
-      sortable: true,
-      render: (value: any, row: Guest) => (
-        <div className="flex items-center space-x-2">
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            row.loyalty_tier === 'Gold' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-            row.loyalty_tier === 'Silver' ? 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200' :
-            'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
-          }`}>
-            {row.loyalty_tier || 'Bronze'}
-          </span>
-        </div>
-      )
-    },
-    {
-      key: 'checkin_day',
-      label: 'Check-in Day',
-      sortable: true,
-      render: (value: any, row: Guest) => (
-        <div className="flex items-center space-x-2">
-          <Calendar className="w-4 h-4 text-secondary-400" />
-          <span className="text-sm text-secondary-900 dark:text-secondary-100">
-            {row.checkin_day ? new Date(row.checkin_day).toLocaleDateString() : 'N/A'}
-          </span>
-        </div>
-      )
-    },
-    {
-      key: 'departure_date',
-      label: 'Departure Date',
-      sortable: true,
-      render: (value: any, row: Guest) => (
-        <div className="flex items-center space-x-2">
-          <Calendar className="w-4 h-4 text-secondary-400" />
-          <span className="text-sm text-secondary-900 dark:text-secondary-100">
-            {row.departure_date ? new Date(row.departure_date).toLocaleDateString() : 'N/A'}
-          </span>
-        </div>
-      )
-    },
-    {
       key: 'actions',
       label: 'Actions',
       sortable: false,
@@ -303,8 +357,8 @@ export default function GuestsPage() {
   ]
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'dark' : ''}`}>
-      <div className="flex min-h-screen">
+    <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900 transition-colors duration-300">
+      {/* Sidebar */}
         <Sidebar 
           isOpen={sidebarOpen} 
           onToggle={() => setSidebarOpen(!sidebarOpen)}
@@ -312,7 +366,8 @@ export default function GuestsPage() {
           onToggleDarkMode={toggleDarkMode}
         />
         
-        <div className="flex-1 flex flex-col">
+      {/* Main Content */}
+      <div className="main-content">
           <Header 
             onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
             title="Guest Management"
@@ -322,87 +377,64 @@ export default function GuestsPage() {
           {/* Main Content */}
           <main className="flex-1 p-4 space-y-4">
 
-          {/* Guest Management */}
-          <div className="card p-3">
-            <div className="space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div>
-                  <h2 className="text-sm font-semibold text-secondary-900 dark:text-secondary-100">
-                    Guest Management
-                  </h2>
-                  <p className="text-xs text-secondary-500 dark:text-secondary-400">
-                    Total Guests: <strong className="text-primary-600 dark:text-primary-400">{totalGuests.toLocaleString()}</strong>
-                  </p>
-                </div>
-                <div className="flex items-center space-x-2 text-xs text-secondary-500 dark:text-secondary-400">
-                  <span>Filtered: <strong className="text-secondary-900 dark:text-secondary-100">{filteredGuests.length}</strong></span>
-                  <span>•</span>
-                  <span>Selected: <strong className="text-primary-600 dark:text-primary-400">{selectedGuests.length}</strong></span>
+          {/* Search and Filters */}
+          <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700 p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              {/* Search */}
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-secondary-400" />
+                  <input
+                    type="text"
+                    placeholder="Search guests..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg bg-white dark:bg-secondary-700 text-secondary-900 dark:text-secondary-100 placeholder-secondary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
                 </div>
               </div>
-              
+
+              {/* Filters */}
               <div className="flex flex-wrap gap-2">
+                <select
+                  value={emailFilter}
+                  onChange={(e) => setEmailFilter(e.target.value as any)}
+                  className="px-3 py-2 text-sm border border-secondary-300 dark:border-secondary-600 rounded-lg bg-white dark:bg-secondary-700 text-secondary-900 dark:text-secondary-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="all">All Guests</option>
+                  <option value="with_email">With Email</option>
+                  <option value="without_email">Without Email</option>
+                </select>
+                
+                <select
+                  value={countryFilter}
+                  onChange={(e) => setCountryFilter(e.target.value)}
+                  className="px-3 py-2 text-sm border border-secondary-300 dark:border-secondary-600 rounded-lg bg-white dark:bg-secondary-700 text-secondary-900 dark:text-secondary-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="all">All Nationalities</option>
+                  {nationalities.map(nationality => (
+                    <option key={nationality} value={nationality}>{nationality}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2">
                 <button
-                  onClick={handleExportAll}
-                  className="btn-primary flex items-center space-x-2"
+                  onClick={handleExportExcel}
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center space-x-2 transition-colors"
                 >
                   <Download className="h-4 w-4" />
-                  <span>Export All</span>
+                  <span>Export</span>
                 </button>
+
                 <button
                   onClick={refreshGuests}
-                  className="btn-ghost flex items-center space-x-2"
+                  className="px-4 py-2 bg-secondary-100 hover:bg-secondary-200 dark:bg-secondary-700 dark:hover:bg-secondary-600 text-secondary-700 dark:text-secondary-300 rounded-lg flex items-center space-x-2 transition-colors"
                 >
                   <RefreshCw className="h-4 w-4" />
                   <span>Refresh</span>
                 </button>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-secondary-700 dark:text-secondary-300 mb-1">
-                    Search Guests
-                  </label>
-                  <div className="relative">
-                    <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3 w-3 text-secondary-400" />
-                    <input
-                      type="text"
-                      placeholder="Search by name or email..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="input pl-8 text-sm"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-secondary-700 dark:text-secondary-300 mb-1">
-                    Email Filter
-                  </label>
-                  <select
-                    value={emailFilter}
-                    onChange={(e) => setEmailFilter(e.target.value as any)}
-                    className="select text-sm"
-                  >
-                    <option value="all">All Guests</option>
-                    <option value="with_email">With Email Only</option>
-                    <option value="without_email">Without Email</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-secondary-700 dark:text-secondary-300 mb-1">
-                    Country Filter
-                  </label>
-                  <select
-                    value={countryFilter}
-                    onChange={(e) => setCountryFilter(e.target.value)}
-                    className="select text-sm"
-                  >
-                    <option value="all">All Countries</option>
-                    {uniqueCountries.map(country => (
-                      <option key={country} value={country}>{country}</option>
-                    ))}
-                  </select>
-                </div>
               </div>
             </div>
           </div>
@@ -500,7 +532,6 @@ export default function GuestsPage() {
               onClose={() => setToast({ show: false, message: '', type: 'info' })}
             />
           )}
-        </div>
       </div>
     </div>
   )
