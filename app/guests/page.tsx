@@ -7,8 +7,6 @@ import {
   Download, 
   Eye,
   Mail,
-  Phone,
-  Calendar,
   RefreshCw
 } from 'lucide-react'
 import Sidebar from '@/components/Sidebar'
@@ -234,51 +232,6 @@ export default function GuestsPage() {
     setSelectedGuest(guest)
     setShowCheckInsModal(true)
   }
-
-<<<<<<< HEAD
-=======
-  const handleSaveGuest = async (guestData: Partial<Guest>) => {
-    try {
-      if (selectedGuest) {
-        // Update existing guest
-        const updatedGuest = await updateGuest(selectedGuest.guest_id!, guestData)
-        if (updatedGuest) {
-          showToast('Guest updated successfully!', 'success')
-          setShowEditModal(false)
-        } else {
-          showToast('Failed to update guest', 'error')
-        }
-      } else {
-        // Create new guest
-        const newGuest = await createGuest(guestData)
-        if (newGuest) {
-          showToast('Guest added successfully!', 'success')
-          setShowEditModal(false)
-        } else {
-          showToast('Failed to add guest', 'error')
-        }
-      }
-    } catch (error) {
-      showToast('An error occurred while saving guest', 'error')
-    }
-  }
-
-  const handleConfirmDelete = async () => {
-    if (!selectedGuest?.guest_id) return
-
-    try {
-      const success = await deleteGuest(selectedGuest.guest_id)
-      if (success) {
-        showToast('Guest deleted successfully!', 'success')
-        setShowDeleteModal(false)
-      } else {
-        showToast('Failed to delete guest', 'error')
-      }
-    } catch (error) {
-      showToast('An error occurred while deleting guest', 'error')
-    }
-  }
->>>>>>> 0eeb0a7a005616dd7938f4334a69dca43d95a8ed
 
   const showToast = (message: string, type: ToastState['type']) => {
     setToast({ show: true, message, type })
