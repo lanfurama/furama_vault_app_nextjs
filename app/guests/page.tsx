@@ -7,7 +7,8 @@ import {
   Download, 
   Eye,
   Mail,
-  RefreshCw
+  RefreshCw,
+  BarChart3
 } from 'lucide-react'
 import Sidebar from '@/components/Sidebar'
 import Header from '@/components/Header'
@@ -130,10 +131,40 @@ export default function GuestsPage() {
     'Colombia', 'Peru', 'Venezuela', 'Mexico', 'Greece', 'Other'
   ]
 
-  // Calculate statistics
+   // Calculate statistics
+   const totalGuests = pagination.count || guests.length
+   const guestsWithEmail = guests.filter(guest => guest.email && guest.email.trim() !== '').length
+   
+   // Calculate top 5 countries with most guests having email
+   const countryEmailStats = guests.reduce((acc, guest) => {
+     if (guest.nationality && guest.email && guest.email.trim() !== '') {
+       if (!acc[guest.nationality]) {
+         acc[guest.nationality] = { total: 0, withEmail: 0 }
+       }
+       acc[guest.nationality].total += 1
+       acc[guest.nationality].withEmail += 1
+     } else if (guest.nationality) {
+       if (!acc[guest.nationality]) {
+         acc[guest.nationality] = { total: 0, withEmail: 0 }
+       }
+       acc[guest.nationality].total += 1
+     }
+     return acc
+   }, {} as Record<string, { total: number; withEmail: number }>)
 
-  // No client-side filtering needed - all filtering is done via API parameters
-  const filteredGuests = guests
+   const topCountriesWithEmail = Object.entries(countryEmailStats)
+     .filter(([_, stats]) => stats.withEmail > 0)
+     .sort((a, b) => b[1].withEmail - a[1].withEmail)
+     .slice(0, 5)
+     .map(([country, stats]) => ({
+       country,
+       withEmail: stats.withEmail,
+       total: stats.total,
+       percentage: Math.round((stats.withEmail / stats.total) * 100)
+     }))
+
+   // No client-side filtering needed - all filtering is done via API parameters
+   const filteredGuests = guests
   
 
   const handleSelectGuest = (guestId: number) => {
@@ -390,9 +421,69 @@ export default function GuestsPage() {
                 </button>
               </div>
             </div>
-          </div>
+           </div>
 
-          {/* Data Table */}
+           {/* Top Countries Statistics */}
+           {topCountriesWithEmail.length > 0 && (
+             <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700 p-4">
+               <div className="flex items-center space-x-2 mb-4">
+                 <BarChart3 className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+                 <h3 className="text-lg font-semibold text-secondary-900 dark:text-secondary-100">
+                   Top 5 Countries with Most Guests Having Email
+                 </h3>
+               </div>
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                 {topCountriesWithEmail.map((item, index) => (
+                   <div key={item.country} className="bg-secondary-50 dark:bg-secondary-700 rounded-lg p-3">
+                     <div className="flex items-center justify-between mb-2">
+                       <div className="flex items-center space-x-2">
+                         <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+                           index === 0 ? 'bg-yellow-500' :
+                           index === 1 ? 'bg-gray-400' :
+                           index === 2 ? 'bg-orange-500' :
+                           'bg-primary-500'
+                         }`}>
+                           {index + 1}
+                         </div>
+                         <span className="text-sm font-medium text-secondary-900 dark:text-secondary-100">
+                           {item.country}
+                         </span>
+                       </div>
+                     </div>
+                     <div className="space-y-1">
+                       <div className="flex justify-between text-xs">
+                         <span className="text-secondary-600 dark:text-secondary-400">With Email:</span>
+                         <span className="font-semibold text-primary-600 dark:text-primary-400">
+                           {item.withEmail}
+                         </span>
+                       </div>
+                       <div className="flex justify-between text-xs">
+                         <span className="text-secondary-600 dark:text-secondary-400">Total:</span>
+                         <span className="text-secondary-900 dark:text-secondary-100">
+                           {item.total}
+                         </span>
+                       </div>
+                       <div className="flex justify-between text-xs">
+                         <span className="text-secondary-600 dark:text-secondary-400">Rate:</span>
+                         <span className="font-semibold text-green-600 dark:text-green-400">
+                           {item.percentage}%
+                         </span>
+                       </div>
+                     </div>
+                     {/* Progress bar */}
+                     <div className="mt-2 w-full bg-secondary-200 dark:bg-secondary-600 rounded-full h-1.5">
+                       <div 
+                         className="bg-primary-500 h-1.5 rounded-full transition-all duration-300"
+                         style={{ width: `${item.percentage}%` }}
+                       ></div>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+             </div>
+           )}
+
+           {/* Data Table */}
           <DataTable
             data={filteredGuests}
             columns={columns}
