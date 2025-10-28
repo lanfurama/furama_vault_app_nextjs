@@ -11,7 +11,10 @@ export const metadata: Metadata = {
   authors: [{ name: 'Furama Resort' }],
   viewport: 'width=device-width, initial-scale=1',
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: '/favicon.svg', sizes: 'any', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' }
+    ],
     shortcut: '/favicon.ico',
     apple: '/favicon.ico',
   },
