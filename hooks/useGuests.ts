@@ -9,10 +9,11 @@ interface UseGuestsOptions {
   propertyId?: number
   hasEmail?: boolean
   nationality?: string
+  language?: string
 }
 
 export function useGuests(options: UseGuestsOptions = {}) {
-  const { autoFetch = true, searchTerm = '', propertyId, hasEmail, nationality } = options
+  const { autoFetch = true, searchTerm = '', propertyId, hasEmail, nationality, language } = options
   
   const [guests, setGuests] = useState<Guest[]>([])
   const [loading, setLoading] = useState(false)
@@ -27,7 +28,7 @@ export function useGuests(options: UseGuestsOptions = {}) {
 
   const fetchGuests = useCallback(async (page = 1, search = searchTerm) => {
     try {
-      console.log('🔄 fetchGuests called:', { page, search, hasEmail, nationality, propertyId })
+      console.log('🔄 fetchGuests called:', { page, search, hasEmail, nationality, language, propertyId })
       setLoading(true)
       setError(null)
       
@@ -36,7 +37,8 @@ export function useGuests(options: UseGuestsOptions = {}) {
         search: search || undefined,
         property_id: propertyId,
         has_email: hasEmail,
-        nationality: nationality
+        nationality: nationality,
+        language: language
       })
       
       setGuests(response.results)
@@ -58,7 +60,7 @@ export function useGuests(options: UseGuestsOptions = {}) {
     } finally {
       setLoading(false)
     }
-  }, [searchTerm, propertyId, hasEmail, nationality])
+  }, [searchTerm, propertyId, hasEmail, nationality, language])
 
   const searchGuests = useCallback(async (search: string) => {
     try {
@@ -171,31 +173,31 @@ export function useGuests(options: UseGuestsOptions = {}) {
 
   const refreshGuests = useCallback(() => {
     fetchGuests(pagination.currentPage, searchTerm)
-  }, [pagination.currentPage, searchTerm, hasEmail, nationality, propertyId])
+  }, [pagination.currentPage, searchTerm, hasEmail, nationality, language, propertyId])
 
   const goToPage = useCallback((page: number) => {
     fetchGuests(page, searchTerm)
-  }, [searchTerm, hasEmail, nationality, propertyId])
+  }, [searchTerm, hasEmail, nationality, language, propertyId])
 
   const goToNextPage = useCallback(() => {
     if (pagination.next) {
       fetchGuests(pagination.currentPage + 1, searchTerm)
     }
-  }, [pagination.next, pagination.currentPage, searchTerm, hasEmail, nationality, propertyId])
+  }, [pagination.next, pagination.currentPage, searchTerm, hasEmail, nationality, language, propertyId])
 
   const goToPreviousPage = useCallback(() => {
     if (pagination.previous) {
       fetchGuests(pagination.currentPage - 1, searchTerm)
     }
-  }, [pagination.previous, pagination.currentPage, searchTerm, hasEmail, nationality, propertyId])
+  }, [pagination.previous, pagination.currentPage, searchTerm, hasEmail, nationality, language, propertyId])
 
   // Auto-fetch on mount and when dependencies change
   useEffect(() => {
-    console.log('🔄 useEffect triggered:', { autoFetch, hasEmail, nationality, searchTerm, propertyId })
+    console.log('🔄 useEffect triggered:', { autoFetch, hasEmail, nationality, language, searchTerm, propertyId })
     if (autoFetch) {
       fetchGuests()
     }
-  }, [autoFetch, hasEmail, nationality, searchTerm, propertyId])
+  }, [autoFetch, hasEmail, nationality, language, searchTerm, propertyId])
 
   return {
     guests,

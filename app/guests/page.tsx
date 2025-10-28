@@ -51,6 +51,7 @@ export default function GuestsPage() {
   const [selectedGuests, setSelectedGuests] = useState<number[]>([])
   const [emailFilter, setEmailFilter] = useState<'all' | 'with_email' | 'without_email'>('all')
   const [countryFilter, setCountryFilter] = useState<string>('all')
+  const [languageFilter, setLanguageFilter] = useState<string>('all')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(false)
   const [showCheckInsModal, setShowCheckInsModal] = useState(false)
@@ -75,7 +76,8 @@ export default function GuestsPage() {
     autoFetch: true, 
     searchTerm,
     hasEmail: emailFilter === 'with_email' ? true : emailFilter === 'without_email' ? false : undefined,
-    nationality: countryFilter === 'all' ? undefined : countryFilter
+    nationality: countryFilter === 'all' ? undefined : countryFilter,
+    language: languageFilter === 'all' ? undefined : languageFilter
   })
 
   // Dark mode handling
@@ -204,6 +206,11 @@ export default function GuestsPage() {
         params.append('nationality', countryFilter)
       }
       
+      // Add language filter
+      if (languageFilter !== 'all') {
+        params.append('language', languageFilter)
+      }
+
       // Add search term if exists
       if (searchTerm) {
         params.append('search', searchTerm)
@@ -399,6 +406,19 @@ export default function GuestsPage() {
                   {nationalities.map(nationality => (
                     <option key={nationality} value={nationality}>{nationality}</option>
                   ))}
+                </select>
+
+                <select
+                  value={languageFilter}
+                  onChange={(e) => setLanguageFilter(e.target.value)}
+                  className="px-3 py-2 text-sm border border-secondary-300 dark:border-secondary-600 rounded-lg bg-white dark:bg-secondary-700 text-secondary-900 dark:text-secondary-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="all">All Languages</option>
+                  <option value="EN">English</option>
+                  <option value="VN">Vietnamese</option>
+                  <option value="KO">Korean</option>
+                  <option value="JA">Japanese</option>
+                  <option value="CN">Chinese</option>
                 </select>
               </div>
 

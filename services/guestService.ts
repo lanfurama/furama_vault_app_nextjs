@@ -69,6 +69,7 @@ export class GuestService {
     property_id?: number
     has_email?: boolean
     nationality?: string
+    language?: string
   }): Promise<GuestResponse> {
     const searchParams = new URLSearchParams()
     
@@ -77,6 +78,7 @@ export class GuestService {
     if (params?.property_id) searchParams.append('property_id', params.property_id.toString())
     if (params?.has_email !== undefined) searchParams.append('has_email', params.has_email.toString())
     if (params?.nationality) searchParams.append('nationality', params.nationality)
+    if (params?.language) searchParams.append('language', params.language)
 
     const url = `${API_BASE_URL}/guests/${searchParams.toString() ? `?${searchParams.toString()}` : ''}`
     return this.makeRequest<GuestResponse>(url)
