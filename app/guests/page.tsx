@@ -19,6 +19,7 @@ import GuestCheckIns from '@/components/GuestCheckIns'
 import { useGuests } from '@/hooks/useGuests'
 import { exportToExcel } from '@/utils/exportUtils'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/useAuth'
 
 interface Guest {
   guest_id: number
@@ -47,16 +48,23 @@ interface ToastState {
 
 export default function GuestsPage() {
   const router = useRouter()
+  const { isAdmin } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedGuests, setSelectedGuests] = useState<number[]>([])
   const [emailFilter, setEmailFilter] = useState<'all' | 'with_email' | 'without_email'>('all')
-  const [countryFilter, setCountryFilter] = useState<string>('all')
   const [languageFilter, setLanguageFilter] = useState<string>('all')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(false)
   const [showCheckInsModal, setShowCheckInsModal] = useState(false)
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null)
   const [toast, setToast] = useState<ToastState>({ show: false, message: '', type: 'info' })
+  const [topCountriesWithEmail, setTopCountriesWithEmail] = useState<Array<{
+    country: string
+    withEmail: number
+    total: number
+    percentage: number
+  }>>([])
+  const [loadingStats, setLoadingStats] = useState(false)
 
   // Use the custom hook for guest management
   const {
@@ -76,7 +84,6 @@ export default function GuestsPage() {
     autoFetch: true, 
     searchTerm,
     hasEmail: emailFilter === 'with_email' ? true : emailFilter === 'without_email' ? false : undefined,
-    nationality: countryFilter === 'all' ? undefined : countryFilter,
     language: languageFilter === 'all' ? undefined : languageFilter
   })
 
@@ -91,13 +98,28 @@ export default function GuestsPage() {
 
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode
+    const html = document.documentElement
+    
+    // Disable ALL transitions to prevent lag during theme switch
+    html.classList.add('theme-transitioning')
+    
+    // Apply theme change immediately (no transition)
+    if (newDarkMode) {
+      html.classList.add('dark')
+    } else {
+      html.classList.remove('dark')
+    }
+    
+    // Force a reflow to ensure DOM updates
+    void html.offsetHeight
+    
+    // Re-enable transitions after DOM has updated
+    setTimeout(() => {
+      html.classList.remove('theme-transitioning')
+    }, 50)
+    
     setDarkMode(newDarkMode)
     localStorage.setItem('darkMode', newDarkMode.toString())
-    if (newDarkMode) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
   }
 
   // Handle search with debounce
@@ -113,61 +135,107 @@ export default function GuestsPage() {
     return () => clearTimeout(timeoutId)
   }, [searchTerm, searchGuests, refreshGuests])
 
-  // Handle email filter changes - let useGuests hook handle this automatically
-  // useEffect(() => {
-  //   refreshGuests()
-  // }, [emailFilter, refreshGuests])
+  // Fetch top countries statistics from API
+  useEffect(() => {
+    const fetchTopCountriesStats = async () => {
+      try {
+        setLoadingStats(true)
+        
+        // Try different possible API endpoints
+        const endpoints = [
+          '/api/v1/guests/statistics/country-email/',
+          '/api/v1/guests/statistics/nationality-email/',
+          '/api/v1/guests/country-stats/',
+          '/api/v1/guests/statistics/countries-with-email/',
+          '/api/v1/guests/statistics/top-countries-email/'
+        ]
+        
+        let data = null
+        let lastError = null
+        
+        // Try each endpoint until one works
+        for (const endpoint of endpoints) {
+          try {
+            const response = await fetch(`/api/proxy?endpoint=${endpoint}`)
+            
+            if (response.ok) {
+              data = await response.json()
+              console.log('✅ Successfully fetched from:', endpoint, data)
+              break
+            }
+          } catch (error) {
+            lastError = error
+            console.log('❌ Failed to fetch from:', endpoint)
+            continue
+          }
+        }
+        
+        if (!data) {
+          throw lastError || new Error('All API endpoints failed')
+        }
+        
+        // Transform API response to match our format
+        let stats: Array<{
+          country: string
+          withEmail: number
+          total: number
+          percentage: number
+        }> = []
+        
+        // Handle different response formats
+        let items: any[] = []
+        
+        if (Array.isArray(data)) {
+          items = data
+        } else if (data.results && Array.isArray(data.results)) {
+          items = data.results
+        } else if (data.data && Array.isArray(data.data)) {
+          items = data.data
+        } else if (data.statistics && Array.isArray(data.statistics)) {
+          items = data.statistics
+        }
+        
+        // Transform items to our format
+        stats = items
+          .filter((item: any) => {
+            const withEmail = item.with_email || item.withEmail || item.guests_with_email || 0
+            return withEmail > 0
+          })
+          .sort((a: any, b: any) => {
+            const aEmail = a.with_email || a.withEmail || a.guests_with_email || 0
+            const bEmail = b.with_email || b.withEmail || b.guests_with_email || 0
+            return bEmail - aEmail
+          })
+          .slice(0, 5)
+          .map((item: any) => {
+            const country = item.nationality || item.country || item.nation || ''
+            const withEmail = item.with_email || item.withEmail || item.guests_with_email || 0
+            const total = item.total || item.total_guests || item.count || 0
+            const percentage = total > 0 ? Math.round((withEmail / total) * 100) : 0
+            
+            return {
+              country,
+              withEmail,
+              total,
+              percentage
+            }
+          })
+        
+        setTopCountriesWithEmail(stats)
+      } catch (error) {
+        console.error('Error fetching country statistics:', error)
+        // Fallback to empty array on error
+        setTopCountriesWithEmail([])
+      } finally {
+        setLoadingStats(false)
+      }
+    }
 
-  // List of nationalities for filter (matching API response values)
-  const nationalities = [
-    'Vietnam', 'Korea, Republic Of', 'China', 'Japan', 'Thailand', 'Singapore', 
-    'Malaysia', 'Indonesia', 'Philippines', 'Taiwan', 'Hong Kong', 'Macau', 
-    'Cambodia', 'Laos', 'Myanmar', 'Brunei', 'Australia', 'New Zealand', 
-    'United States', 'Canada', 'Great Britain', 'France', 'Germany', 'Italy', 
-    'Spain', 'Netherlands', 'Switzerland', 'Austria', 'Belgium', 'Sweden', 
-    'Norway', 'Denmark', 'Finland', 'Russia', 'India', 'Pakistan', 'Bangladesh', 
-    'Sri Lanka', 'Nepal', 'Bhutan', 'Maldives', 'Afghanistan', 'Iran', 'Iraq', 
-    'Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Bahrain', 'Oman', 'Jordan', 
-    'Lebanon', 'Syria', 'Turkey', 'Israel', 'Egypt', 'South Africa', 'Nigeria', 
-    'Kenya', 'Morocco', 'Tunisia', 'Algeria', 'Brazil', 'Argentina', 'Chile', 
-    'Colombia', 'Peru', 'Venezuela', 'Mexico', 'Greece', 'Other'
-  ]
+    fetchTopCountriesStats()
+  }, []) // Fetch once on mount
 
-   // Calculate statistics
-   const totalGuests = pagination.count || guests.length
-   const guestsWithEmail = guests.filter(guest => guest.email && guest.email.trim() !== '').length
-   
-   // Calculate top 5 countries with most guests having email
-   const countryEmailStats = guests.reduce((acc, guest) => {
-     if (guest.nationality && guest.email && guest.email.trim() !== '') {
-       if (!acc[guest.nationality]) {
-         acc[guest.nationality] = { total: 0, withEmail: 0 }
-       }
-       acc[guest.nationality].total += 1
-       acc[guest.nationality].withEmail += 1
-     } else if (guest.nationality) {
-       if (!acc[guest.nationality]) {
-         acc[guest.nationality] = { total: 0, withEmail: 0 }
-       }
-       acc[guest.nationality].total += 1
-     }
-     return acc
-   }, {} as Record<string, { total: number; withEmail: number }>)
-
-   const topCountriesWithEmail = Object.entries(countryEmailStats)
-     .filter(([_, stats]) => stats.withEmail > 0)
-     .sort((a, b) => b[1].withEmail - a[1].withEmail)
-     .slice(0, 5)
-     .map(([country, stats]) => ({
-       country,
-       withEmail: stats.withEmail,
-       total: stats.total,
-       percentage: Math.round((stats.withEmail / stats.total) * 100)
-     }))
-
-   // No client-side filtering needed - all filtering is done via API parameters
-   const filteredGuests = guests
-  
+  // No client-side filtering needed - all filtering is done via API parameters
+  const filteredGuests = guests
 
   const handleSelectGuest = (guestId: number) => {
     setSelectedGuests(prev => 
@@ -187,6 +255,12 @@ export default function GuestsPage() {
 
 
   const handleExportExcel = async () => {
+    // Check admin permission
+    if (!isAdmin) {
+      showToast('Access denied. Export function is only available for administrators.', 'error')
+      return
+    }
+
     try {
       // Show loading state via toast
       showToast('Preparing export...', 'info')
@@ -199,11 +273,6 @@ export default function GuestsPage() {
         params.append('has_email', 'true')
       } else if (emailFilter === 'without_email') {
         params.append('has_email', 'false')
-      }
-      
-      // Add nationality filter
-      if (countryFilter !== 'all') {
-        params.append('nationality', countryFilter)
       }
       
       // Add language filter
@@ -240,11 +309,10 @@ export default function GuestsPage() {
       const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-')
       let filename = `guests_export_${timestamp}.xlsx`
       
-      if (emailFilter !== 'all' || countryFilter !== 'all') {
+      if (emailFilter !== 'all') {
         const filterParts = []
         if (emailFilter === 'with_email') filterParts.push('with_email')
         if (emailFilter === 'without_email') filterParts.push('without_email')
-        if (countryFilter !== 'all') filterParts.push(countryFilter.replace(/[^a-zA-Z0-9]/g, '_'))
         filename = `guests_${filterParts.join('_')}_${timestamp}.xlsx`
       }
       
@@ -298,22 +366,22 @@ export default function GuestsPage() {
       label: 'Name',
       sortable: true,
       render: (value: any, row: Guest) => (
-                        <div className="flex items-center space-x-2">
-                          <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
-                            <Users className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-secondary-900 dark:text-secondary-100">
-                              {row.first_name && row.last_name 
-                                ? `${row.first_name} ${row.last_name}`.trim()
-                                : row.first_name || 'No Name'
-                              }
-                            </div>
-                            <div className="text-xs text-secondary-500 dark:text-secondary-400">
-                              #{row.guest_id || 'N/A'} • {row.guest_number}
-                            </div>
-                          </div>
-                        </div>
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
+            <Users className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+          </div>
+          <div>
+            <div className="text-sm font-medium text-secondary-900 dark:text-secondary-100">
+              {row.first_name && row.last_name 
+                ? `${row.first_name} ${row.last_name}`.trim()
+                : row.first_name || 'No Name'
+              }
+            </div>
+            <div className="text-xs text-secondary-500 dark:text-secondary-400">
+              #{row.guest_id || 'N/A'} • {row.guest_number}
+            </div>
+          </div>
+        </div>
       )
     },
     {
@@ -348,7 +416,7 @@ export default function GuestsPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900 transition-colors duration-300">
+    <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900">
       {/* Sidebar */}
         <Sidebar 
           isOpen={sidebarOpen} 
@@ -396,17 +464,6 @@ export default function GuestsPage() {
                   <option value="with_email">With Email</option>
                   <option value="without_email">Without Email</option>
                 </select>
-                
-                <select
-                  value={countryFilter}
-                  onChange={(e) => setCountryFilter(e.target.value)}
-                  className="px-3 py-2 text-sm border border-secondary-300 dark:border-secondary-600 rounded-lg bg-white dark:bg-secondary-700 text-secondary-900 dark:text-secondary-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  <option value="all">All Nationalities</option>
-                  {nationalities.map(nationality => (
-                    <option key={nationality} value={nationality}>{nationality}</option>
-                  ))}
-                </select>
 
                 <select
                   value={languageFilter}
@@ -424,13 +481,15 @@ export default function GuestsPage() {
 
               {/* Actions */}
               <div className="flex gap-2">
-                <button
-                  onClick={handleExportExcel}
-                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center space-x-2 transition-colors"
-                >
-                  <Download className="h-4 w-4" />
-                  <span>Export</span>
-                </button>
+                {isAdmin && (
+                  <button
+                    onClick={handleExportExcel}
+                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex items-center space-x-2 transition-colors"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Export</span>
+                  </button>
+                )}
 
                 <button
                   onClick={refreshGuests}
@@ -444,7 +503,14 @@ export default function GuestsPage() {
            </div>
 
            {/* Top Countries Statistics */}
-           {topCountriesWithEmail.length > 0 && (
+           {loadingStats ? (
+             <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700 p-4">
+               <div className="flex items-center justify-center py-8">
+                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                 <span className="ml-3 text-sm text-secondary-600 dark:text-secondary-400">Loading statistics...</span>
+               </div>
+             </div>
+           ) : topCountriesWithEmail.length > 0 ? (
              <div className="bg-white dark:bg-secondary-800 rounded-lg shadow-sm border border-secondary-200 dark:border-secondary-700 p-4">
                <div className="flex items-center space-x-2 mb-4">
                  <BarChart3 className="h-5 w-5 text-primary-600 dark:text-primary-400" />
@@ -501,7 +567,7 @@ export default function GuestsPage() {
                  ))}
                </div>
              </div>
-           )}
+           ) : null}
 
            {/* Data Table */}
           <DataTable

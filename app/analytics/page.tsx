@@ -24,6 +24,7 @@ interface Guest {
   created_date: string
   checkin_day?: string
   departure_date?: string
+  nationality?: string
 }
 
 export default function AnalyticsPage() {
@@ -45,13 +46,28 @@ export default function AnalyticsPage() {
 
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode
+    const html = document.documentElement
+    
+    // Disable ALL transitions to prevent lag during theme switch
+    html.classList.add('theme-transitioning')
+    
+    // Apply theme change immediately (no transition)
+    if (newDarkMode) {
+      html.classList.add('dark')
+    } else {
+      html.classList.remove('dark')
+    }
+    
+    // Force a reflow to ensure DOM updates
+    void html.offsetHeight
+    
+    // Re-enable transitions after DOM has updated
+    setTimeout(() => {
+      html.classList.remove('theme-transitioning')
+    }, 50)
+    
     setDarkMode(newDarkMode)
     localStorage.setItem('darkMode', newDarkMode.toString())
-    if (newDarkMode) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
   }
 
   useEffect(() => {
@@ -92,12 +108,14 @@ export default function AnalyticsPage() {
   // Calculate analytics data
   const totalGuests = Array.isArray(guests) ? guests.length : 0
   const guestsWithEmail = Array.isArray(guests) ? guests.filter(guest => guest.email && guest.email.trim() !== '').length : 0
-  const uniqueCountries = Array.isArray(guests) ? Array.from(new Set(guests.map(guest => guest.first_name).filter(Boolean))).length : 0
+  const uniqueCountries = Array.isArray(guests) ? Array.from(new Set(guests.map(guest => guest.nationality).filter(Boolean))).length : 0
   
   // Country distribution
   const countryData = Array.isArray(guests) ? guests.reduce((acc, guest) => {
-    const country = guest.first_name || 'Unknown'
-    acc[country] = (acc[country] || 0) + 1
+    const country = guest.nationality || 'Unknown'
+    if (country && country !== 'Unknown') {
+      acc[country] = (acc[country] || 0) + 1
+    }
     return acc
   }, {} as Record<string, number>) : {}
 
@@ -144,24 +162,25 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'dark' : ''}`}>
-      <div className="flex min-h-screen">
-        <Sidebar 
-          isOpen={sidebarOpen} 
-          onToggle={() => setSidebarOpen(!sidebarOpen)}
-          darkMode={darkMode}
-          onToggleDarkMode={toggleDarkMode}
+    <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900">
+      {/* Sidebar */}
+      <Sidebar 
+        isOpen={sidebarOpen} 
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        darkMode={darkMode}
+        onToggleDarkMode={toggleDarkMode}
+      />
+      
+      {/* Main Content */}
+      <div className="main-content">
+        <Header 
+          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          title="Analytics"
+          subtitle="Guest data insights and trends"
         />
-        
-        <div className="flex-1 flex flex-col min-h-screen">
-          <Header 
-            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-            title="Analytics"
-            subtitle="Guest data insights and trends"
-          />
 
-          {/* Analytics Content */}
-          <main className="flex-1 p-4 space-y-4">
+        {/* Analytics Content */}
+        <main className="flex-1 p-4 space-y-4">
           {/* Statistics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatsCard
@@ -243,17 +262,23 @@ export default function AnalyticsPage() {
                 </p>
               </div>
               <div className="h-64">
-                <Chart
-                  type="doughnut"
-                  data={countryChartData}
-                  options={{
-                    plugins: {
-                      legend: {
-                        position: 'bottom'
+                {topCountries.length > 0 ? (
+                  <Chart
+                    type="doughnut"
+                    data={countryChartData}
+                    options={{
+                      plugins: {
+                        legend: {
+                          position: 'bottom'
+                        }
                       }
-                    }
-                  }}
-                />
+                    }}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-secondary-500 dark:text-secondary-400">
+                    No country data available
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -279,43 +304,50 @@ export default function AnalyticsPage() {
                   </tr>
                 </thead>
                 <tbody className="table-body">
-                  {topCountries.map(([country, count], index) => (
-                    <tr key={country} className="table-row">
-                      <td className="table-cell">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
-                            <span className="text-sm font-medium text-primary-600 dark:text-primary-400">
-                              {index + 1}
+                  {topCountries.length > 0 ? (
+                    topCountries.map(([country, count], index) => (
+                      <tr key={country} className="table-row">
+                        <td className="table-cell">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
+                              <span className="text-sm font-medium text-primary-600 dark:text-primary-400">
+                                {index + 1}
+                              </span>
+                            </div>
+                            <span className="font-medium text-secondary-900 dark:text-secondary-100">
+                              {country}
                             </span>
                           </div>
-                          <span className="font-medium text-secondary-900 dark:text-secondary-100">
-                            {country}
+                        </td>
+                        <td className="table-cell">
+                          <span className="text-secondary-900 dark:text-secondary-100">
+                            {count.toLocaleString()}
                           </span>
-                        </div>
-                      </td>
-                      <td className="table-cell">
-                        <span className="text-secondary-900 dark:text-secondary-100">
-                          {count.toLocaleString()}
-                        </span>
-                      </td>
-                      <td className="table-cell">
-                        <span className="text-secondary-600 dark:text-secondary-400">
-                          {((count / totalGuests) * 100).toFixed(1)}%
-                        </span>
-                      </td>
-                      <td className="table-cell">
-                        <span className="text-success-600 dark:text-success-400 font-medium">
-                          +{Math.floor(Math.random() * 20 + 5)}%
-                        </span>
+                        </td>
+                        <td className="table-cell">
+                          <span className="text-secondary-600 dark:text-secondary-400">
+                            {totalGuests > 0 ? ((count / totalGuests) * 100).toFixed(1) : '0.0'}%
+                          </span>
+                        </td>
+                        <td className="table-cell">
+                          <span className="text-success-600 dark:text-success-400 font-medium">
+                            +{Math.floor(Math.random() * 20 + 5)}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="table-cell text-center text-secondary-500 dark:text-secondary-400 py-8">
+                        No country data available
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
-          </main>
-        </div>
+        </main>
       </div>
     </div>
   )

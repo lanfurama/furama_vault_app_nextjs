@@ -51,7 +51,7 @@ export default function Header({ onToggleSidebar, title, subtitle }: HeaderProps
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-secondary-400" />
             <input
               type="text"
-              placeholder="Search guests, emails..."
+              placeholder="Search..."
               className="w-full pl-10 pr-4 py-2 border border-secondary-300 dark:border-secondary-600 rounded-lg bg-white dark:bg-secondary-800 text-secondary-900 dark:text-secondary-100 placeholder-secondary-500 dark:placeholder-secondary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
             />
           </div>

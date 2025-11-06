@@ -14,6 +14,16 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   
+  /* Disable ALL transitions during theme toggle to prevent lag */
+  html.theme-transitioning,
+  html.theme-transitioning *,
+  html.theme-transitioning *::before,
+  html.theme-transitioning *::after {
+    transition: none !important;
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+  
   /* Custom scrollbar */
   ::-webkit-scrollbar {
     @apply w-2;
@@ -163,7 +173,8 @@
   }
   
   .main-content {
-    @apply ml-0 lg:ml-64 min-h-screen bg-secondary-50 dark:bg-secondary-900 transition-all duration-300;
+    @apply ml-0 lg:ml-64 min-h-screen bg-secondary-50 dark:bg-secondary-900;
+    transition: background-color 150ms ease-in-out, margin-left 300ms ease-in-out;
   }
   
   .header {

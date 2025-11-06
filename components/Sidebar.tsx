@@ -9,7 +9,8 @@ import {
   Menu,
   X,
   Moon,
-  Sun
+  Sun,
+  LayoutDashboard
 } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
@@ -54,14 +55,14 @@ export default function Sidebar({ isOpen, onToggle, darkMode, onToggleDarkMode }
         <div className="flex items-center justify-between p-4 border-b border-secondary-200 dark:border-secondary-700">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center">
-              <Users className="w-5 h-5 text-white" />
+              <LayoutDashboard className="w-5 h-5 text-white" />
             </div>
             <div>
               <h1 className="text-lg font-bold text-secondary-900 dark:text-secondary-100">
                 Furama Vault
               </h1>
               <p className="text-xs text-secondary-500 dark:text-secondary-400">
-                Guest Management
+                Management System
               </p>
             </div>
           </div>

@@ -26,13 +26,28 @@ export default function SettingsPage() {
 
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode
+    const html = document.documentElement
+    
+    // Disable ALL transitions to prevent lag during theme switch
+    html.classList.add('theme-transitioning')
+    
+    // Apply theme change immediately (no transition)
+    if (newDarkMode) {
+      html.classList.add('dark')
+    } else {
+      html.classList.remove('dark')
+    }
+    
+    // Force a reflow to ensure DOM updates
+    void html.offsetHeight
+    
+    // Re-enable transitions after DOM has updated
+    setTimeout(() => {
+      html.classList.remove('theme-transitioning')
+    }, 50)
+    
     setDarkMode(newDarkMode)
     localStorage.setItem('darkMode', newDarkMode.toString())
-    if (newDarkMode) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
   }
 
   useEffect(() => {
@@ -100,7 +115,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900 transition-colors duration-300">
+    <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900">
       {/* Sidebar */}
       <Sidebar 
         isOpen={sidebarOpen} 
