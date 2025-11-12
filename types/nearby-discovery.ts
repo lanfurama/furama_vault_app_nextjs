@@ -7,6 +7,8 @@ export interface Restaurant {
   name: string
   address: string
   description: string
+  rating?: number
+  imageUrl?: string
 }
 
 export interface GroundingSource {

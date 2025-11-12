@@ -51,15 +51,15 @@ const resampleTo16kHz = (buffer: Float32Array, inputRate: number): Float32Array 
   return result
 }
 
-export const createLiveTranslatorSession = async ({
-  sourceLanguage,
-  targetLanguage,
+export const startLiveTranslatorSession = async ({
+  receptionistLanguage,
+  customerLanguage,
   onMessage,
   onError,
   onClose,
 }: {
-  sourceLanguage: TranslatorLanguage
-  targetLanguage: TranslatorLanguage
+  receptionistLanguage: TranslatorLanguage
+  customerLanguage: TranslatorLanguage
   onMessage: (message: LiveServerMessage) => void
   onError: (error: ErrorEvent) => void
   onClose: (event: CloseEvent) => void
@@ -76,7 +76,7 @@ export const createLiveTranslatorSession = async ({
 
   const ai = new GoogleGenAI({ apiKey })
 
-  const systemInstruction = `You are an expert real-time translator for a conversation between a Receptionist speaking ${sourceLanguage.name} and a Customer speaking ${targetLanguage.name}. Your task is to listen to the user audio and perform two actions: 1. As audio output, you MUST speak the translation in the other person's language. 2. As text output ("outputTranscription"), you MUST provide a single, valid JSON object with the following structure: {"speaker": "receptionist" | "customer", "original": "the original text spoken by the user", "translated": "your translated text"}. You must determine the speaker based on the language they are using.`
+  const systemInstruction = `You are an expert real-time translator for a conversation between a Receptionist speaking ${receptionistLanguage.name} and a Customer speaking ${customerLanguage.name}. Your task is to listen to the user audio and perform two actions: 1. As audio output, you MUST speak the translation in the other person's language. 2. As text output ("outputTranscription"), you MUST provide a single, valid JSON object with the following structure: {"speaker": "receptionist" | "customer", "original": "the original text spoken by the user", "translated": "your translated text"}. You must determine the speaker based on the language they are using.`
 
   const sessionPromise = ai.live.connect({
     model: 'gemini-2.5-flash-native-audio-preview-09-2025',

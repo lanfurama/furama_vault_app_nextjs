@@ -1,3 +1,5 @@
+import { useMemo, useState } from 'react'
+
 import type {
   GroundingSource,
   Restaurant,
@@ -24,6 +26,8 @@ const SkeletonCard = () => (
   </div>
 )
 
+type SortOption = 'rating-desc' | 'rating-asc' | 'name-asc'
+
 const ResultsGrid = ({
   results,
   sources,
@@ -31,6 +35,29 @@ const ResultsGrid = ({
   error,
   hasSearched,
 }: ResultsGridProps) => {
+  const [sortOption, setSortOption] = useState<SortOption>('rating-desc')
+
+  const sortedResults = useMemo(() => {
+    const cloned = [...results]
+    switch (sortOption) {
+      case 'rating-asc':
+        return cloned.sort((a, b) => {
+          const ratingA = typeof a.rating === 'number' ? a.rating : -1
+          const ratingB = typeof b.rating === 'number' ? b.rating : -1
+          return ratingA - ratingB
+        })
+      case 'name-asc':
+        return cloned.sort((a, b) => a.name.localeCompare(b.name))
+      case 'rating-desc':
+      default:
+        return cloned.sort((a, b) => {
+          const ratingA = typeof a.rating === 'number' ? a.rating : -1
+          const ratingB = typeof b.rating === 'number' ? b.rating : -1
+          return ratingB - ratingA
+        })
+    }
+  }, [results, sortOption])
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -83,8 +110,31 @@ const ResultsGrid = ({
 
   return (
     <div>
+      <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <h3 className="text-sm font-semibold text-gray-600 dark:text-secondary-300">
+          {sortedResults.length} places found
+        </h3>
+        <div className="flex items-center gap-2">
+          <label
+            htmlFor="nearby-sort"
+            className="text-sm font-medium text-gray-600 dark:text-secondary-300"
+          >
+            Sort by
+          </label>
+          <select
+            id="nearby-sort"
+            value={sortOption}
+            onChange={event => setSortOption(event.target.value as SortOption)}
+            className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:border-charcoal-700 dark:bg-charcoal-900 dark:text-secondary-200"
+          >
+            <option value="rating-desc">Highest rating</option>
+            <option value="rating-asc">Lowest rating</option>
+            <option value="name-asc">Name A-Z</option>
+          </select>
+        </div>
+      </div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {results.map((restaurant, index) => (
+        {sortedResults.map((restaurant, index) => (
           <RestaurantCard
             key={`${restaurant.name}-${index}`}
             restaurant={restaurant}

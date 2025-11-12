@@ -37,7 +37,63 @@ interface SearchParams {
   location: Coordinates
 }
 
+const FALLBACK_IMAGE =
+  'https://images.unsplash.com/photo-1555992336-cbf54f7d7621?auto=format&fit=crop&w=800&q=80'
+
+const sanitizeRestaurant = (candidate: any): Restaurant | null => {
+  if (!candidate || typeof candidate !== 'object') {
+    return null
+  }
+
+  const name = String(candidate.name ?? '').trim()
+  const address = String(candidate.address ?? '').trim()
+  const description = String(candidate.description ?? '').trim()
+
+  if (!name || !description) {
+    return null
+  }
+
+  const rawRating = Number(candidate.rating)
+  const rating =
+    Number.isFinite(rawRating) && rawRating >= 0
+      ? Math.min(5, Math.max(0, rawRating))
+      : undefined
+
+  const imageUrl =
+    typeof candidate.imageUrl === 'string' && candidate.imageUrl.trim().length > 0
+      ? candidate.imageUrl.trim()
+      : FALLBACK_IMAGE
+
+  return {
+    name,
+    address,
+    description,
+    rating,
+    imageUrl,
+  }
+}
+
+const parseRestaurantsFromJson = (text: string): Restaurant[] => {
+  try {
+    const parsed = JSON.parse(text)
+    if (!Array.isArray(parsed)) {
+      return []
+    }
+    const restaurants = parsed
+      .map(item => sanitizeRestaurant(item))
+      .filter((item): item is Restaurant => item !== null)
+    return restaurants
+  } catch {
+    return []
+  }
+}
+
 const parseRestaurantsFromText = (text: string): Restaurant[] => {
+  const jsonParsed = parseRestaurantsFromJson(text)
+  if (jsonParsed.length > 0) {
+    return jsonParsed
+  }
+
   const restaurants: Restaurant[] = []
   const regex =
     /^\s*\d+\.\s*\*?\s*([^-\n]+?)\s*-\s*([^-\n]+?)\s*-\s*([\s\S]+?)(?=\n\s*\d+\.\s*\*?|$)/gm
@@ -48,6 +104,7 @@ const parseRestaurantsFromText = (text: string): Restaurant[] => {
       name: match[1].replace(/\*\*/g, '').trim(),
       address: match[2].trim(),
       description: match[3].trim(),
+      imageUrl: FALLBACK_IMAGE,
     })
   }
 
@@ -66,8 +123,16 @@ export const findNearbyEateries = async ({
   const query = categories.join(' or ')
 
   const prompt = isThinkingMode
-    ? `I'm looking for a thoughtful recommendation for "${query}" within a ${radius} kilometer radius of my location. Provide a detailed analysis for each suggestion. For each place, give its name, full address, and a comprehensive description of why it's a good choice. Format the output as a numbered list. Example: 1. [Name] - [Address] - [Description]`
-    : `Find "${query}" within a ${radius} kilometer radius from my current location. For each place, provide its name, its address, and a short description. Format the output as a numbered list. Example: 1. [Name] - [Address] - [Description]`
+    ? `You are assisting a hospitality concierge. Recommend the best matches for "${query}" within a ${radius} kilometer radius of the provided coordinates. Respond with **only valid JSON** (no markdown, no explanations). The JSON must be an array where every item has the shape:
+{
+  "name": string,
+  "address": string,
+  "description": string,
+  "rating": number (0-5, round to one decimal place),
+  "imageUrl": string (high-quality photo URL or Google Maps photo URL)
+}
+Ensure descriptions capture unique highlights, rating reflects overall guest sentiment, and imageUrl is a direct link to a representative photo.`
+    : `Find top matches for "${query}" within a ${radius} kilometer radius from the provided location. Reply with **only a JSON array** of objects containing: name, address, description, rating (0-5), imageUrl (direct photo URL). Keep descriptions concise and highlight what makes each spot special.`
 
   const config: Record<string, unknown> = isThinkingMode
     ? {
