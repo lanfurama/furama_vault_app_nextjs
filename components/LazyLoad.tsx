@@ -22,27 +22,25 @@ export default function LazyLoad({
   const elementRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !hasLoaded) {
-          setIsVisible(true)
-          setHasLoaded(true)
-        }
-      },
-      {
-        threshold,
-        rootMargin
-      }
-    )
+    if (!elementRef.current) return
 
-    if (elementRef.current) {
-      observer.observe(elementRef.current)
-    }
+    const observer = new IntersectionObserver((entries) => {
+      const [{ isIntersecting }] = entries
+
+      if (isIntersecting) {
+        setIsVisible(true)
+        observer.disconnect()
+      }
+    }, {
+      threshold,
+      rootMargin
+    })
+
+    const currentEl = elementRef.current
+    observer.observe(currentEl)
 
     return () => {
-      if (elementRef.current) {
-        observer.unobserve(elementRef.current)
-      }
+      observer.disconnect()
     }
   }, [threshold, rootMargin, hasLoaded])
 

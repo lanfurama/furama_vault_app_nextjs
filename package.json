@@ -1,5 +1,5 @@
 {
-  "name": "furama-vault-app",
+  "name": "furama-studio",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -12,11 +12,14 @@
     "axios": "^1.6.2",
     "chart.js": "^4.5.1",
     "date-fns": "^2.30.0",
+    "@google/genai": "^1.29.0",
     "lucide-react": "^0.294.0",
     "next": "14.0.4",
     "react": "^18",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
@@ -26,6 +29,7 @@
     "autoprefixer": "^10.0.1",
     "eslint": "^8",
     "eslint-config-next": "14.0.4",
+    "@tailwindcss/typography": "^0.5.12",
     "postcss": "^8",
     "tailwindcss": "^3.3.0",
     "typescript": "^5"

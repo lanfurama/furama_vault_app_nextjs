@@ -98,9 +98,12 @@ export default function DataTable({
     )
   }
 
+  const containerClasses =
+    'rounded-3xl border border-secondary-200 bg-white p-6 shadow-soft transition-all duration-200 dark:border-charcoal-700 dark:bg-charcoal-800'
+
   if (loading) {
     return (
-      <div className="card">
+      <div className={containerClasses}>
         <div className="flex justify-center items-center py-12">
           <div className="loading-spinner h-8 w-8"></div>
         </div>
@@ -112,7 +115,7 @@ export default function DataTable({
     <div className="space-y-4">
       {/* Search and Filters */}
       {(searchable || exportable) && (
-        <div className="card">
+        <div className={containerClasses}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             {searchable && (
               <div className="flex-1 max-w-md">
@@ -143,7 +146,7 @@ export default function DataTable({
       )}
 
       {/* Table */}
-      <div className="card overflow-hidden">
+      <div className={`${containerClasses} overflow-hidden p-0`}>
         {filteredAndSortedData.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-secondary-400 mb-4">

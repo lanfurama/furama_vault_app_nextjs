@@ -1,24 +1,36 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import LoadingSpinner from './LoadingSpinner'
 
 export default function PageTransitionLoader() {
   const pathname = usePathname()
   const [loading, setLoading] = useState(false)
+  const fallbackTimer = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    // Listen for link clicks to show loader immediately
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement
-      const link = target.closest('a[href]')
-      
+      const link = target.closest('a[href]') as HTMLAnchorElement | null
+
       if (link) {
         const href = link.getAttribute('href')
-        // Only show loader for internal navigation (not external links)
+
         if (href && href.startsWith('/') && !href.startsWith('//')) {
-          setLoading(true)
+          const nextUrl = new URL(href, window.location.origin)
+          const nextPath = nextUrl.pathname
+
+          if (nextPath !== pathname) {
+            setLoading(true)
+
+            if (fallbackTimer.current) {
+              clearTimeout(fallbackTimer.current)
+            }
+            fallbackTimer.current = setTimeout(() => {
+              setLoading(false)
+            }, 1000)
+          }
         }
       }
     }
@@ -27,16 +39,21 @@ export default function PageTransitionLoader() {
 
     return () => {
       document.removeEventListener('click', handleClick, true)
+      if (fallbackTimer.current) {
+        clearTimeout(fallbackTimer.current)
+      }
     }
-  }, [])
+  }, [pathname])
 
   useEffect(() => {
-    // Handle pathname changes - show loader when route changes
     setLoading(true)
-    
-    // Hide loader after page transition completes
+
     const timer = setTimeout(() => {
       setLoading(false)
+      if (fallbackTimer.current) {
+        clearTimeout(fallbackTimer.current)
+        fallbackTimer.current = null
+      }
     }, 400)
 
     return () => clearTimeout(timer)

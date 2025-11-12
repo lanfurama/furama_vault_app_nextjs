@@ -1,6 +1,6 @@
-# Furama Vault - Professional Guest Management System
+# Furama Studio – Hospitality Add-on Workspace
 
-A modern, enterprise-grade guest management system built with Next.js 14, TypeScript, and Tailwind CSS. Designed for hospitality businesses with advanced analytics, reporting, and data management capabilities.
+Furama Studio is the digital atelier for Furama Resort: a unified interface that threads together core property operations, storytelling tools, and upcoming guest experience add-ons. Built with Next.js 14, TypeScript, and Tailwind CSS, Studio embraces Furama’s refreshed visual language: deep sea teal `#066055`, artisan sand `#F2EEE8`, and charcoal `#313131`.
 
 ## ✨ Features
 
@@ -10,29 +10,33 @@ A modern, enterprise-grade guest management system built with Next.js 14, TypeSc
 - **Responsive Layout**: Mobile-first design that works on all devices
 - **Smooth Animations**: Micro-interactions and transitions for better UX
 
-### 📊 Dashboard & Analytics
-- **Real-time Statistics**: Live guest counts, email coverage, country distribution
-- **Interactive Charts**: Monthly trends, country analysis with Chart.js
-- **Performance Metrics**: Growth rates, registration patterns
-- **Visual Insights**: Easy-to-understand data visualization
+### 🧭 Studio Overview
+- **Add-on Control Centre**: Discover, launch, and manage Furama PMS and AI Lab with room to grow
+- **Roadmap Highlights**: Surface upcoming modules like Experience Marketplace, Analytics Studio, and Campaign Orchestrator
+- **Brand-coherent UI**: Consistent typography, color system, and motion aligned with Furama Studio
 
-### 👥 Guest Management
-- **Advanced Data Table**: Sortable, filterable, searchable guest list
-- **Bulk Operations**: Select multiple guests for batch actions
-- **Export Functionality**: Excel export with XLSX
-- **Real-time Search**: Instant filtering by name, email, country
+### 🧪 AI Lab
+- **AI Writer Copilot**: Gemini-powered editorial assistant for campaigns and guest communications
+- **Innovation Runway**: Incubating Experience Insights and Concierge Copilot add-ons
+- **Lab Navigation**: Central hub to explore current and upcoming AI modules
+- **Production & Beta Modes**: Separate status badges for live vs. incubating copilots
 
-### 🔧 System Features
-- **API Integration**: Configurable backend API connection
-- **Error Handling**: Comprehensive error boundaries and user feedback
-- **Loading States**: Smooth loading indicators and skeleton screens
-- **Performance Optimized**: Lazy loading, efficient rendering
+### 🏨 Furama PMS
+- **Guest Intelligence**: Advanced table views with filters, search, exports, and quick actions
+- **Operational Dashboards**: Analytics and reporting tuned for hospitality KPIs
+- **Dark Mode Ready**: Sand and charcoal palette keeps content legible day or night
+- **Module Navigator**: Property, Guest, Room, Rate, Reservation, Service, Payment, Staff, Front Office, Reporting & Analytics
+- **In-Module Settings**: Configure PMS API connectivity directly from the Guest Management module
 
-### 📈 Reporting & Analytics
-- **Multiple Report Types**: Guest lists, email lists, country analysis
-- **Date Range Filtering**: Custom date range selection
-- **Export Options**: Various export formats and configurations
-- **Report History**: Track and download previous reports
+### ✍️ AI Writer (via AI Lab)
+- **Gemini 2.5 Deep Dive**: Generate narrative-rich articles ready for editing and export
+- **Deep Dive Mode**: Multi-phase reasoning for publication-ready drafts
+- **Inline Editing**: Switch between live preview and markdown editing without leaving Studio
+
+### 🔧 Platform Foundation
+- **Modular Architecture**: Next.js App Router with add-on isolation
+- **API Gateway**: Secure proxy layer for PMS data sources
+- **Design System**: Tailwind + @tailwindcss/typography with bespoke buttons, inputs, and layout primitives
 
 ## 🚀 Getting Started
 
@@ -68,9 +72,10 @@ npm run dev
 
 ### Configuration
 
-1. **API Setup**: Go to Settings page and configure your backend API URL
-2. **Theme**: Toggle between light and dark mode using the sidebar
-3. **Data**: The system will automatically fetch guest data from your API
+1. **API Setup**: Open Furama PMS and use the in-module settings button to configure the backend API endpoint
+2. **AI Lab / AI Writer**: Add `GOOGLE_GENAI_API_KEY` to `.env.local` for Gemini access
+3. **Theme**: Toggle between light and dark mode directly from the sidebar footer
+4. **Data**: PMS modules automatically hydrate from your configured API
 
 ## 🏗️ Architecture
 
@@ -85,9 +90,12 @@ npm run dev
 ### Project Structure
 ```
 ├── app/                    # Next.js App Router
-│   ├── analytics/         # Analytics dashboard
-│   ├── reports/           # Reports generation
-│   ├── settings/          # System settings
+│   ├── analytics/         # PMS analytics dashboards
+│   ├── reports/           # PMS reporting suite
+│   ├── ai-lab/            # AI Lab overview
+│   ├── ai-writer/         # AI Content Studio
+│   ├── guests/            # Furama PMS guest operations
+│   ├── settings/          # Studio configuration
 │   └── globals.css        # Global styles
 ├── components/            # Reusable components
 │   ├── AnimatedCard.tsx   # Animated card component
@@ -96,9 +104,13 @@ npm run dev
 │   ├── ErrorBoundary.tsx  # Error handling
 │   ├── Header.tsx         # Top navigation
 │   ├── Modal.tsx          # Modal dialogs
-│   ├── Sidebar.tsx        # Side navigation
+│   ├── Sidebar.tsx        # Studio navigation + add-on switcher
 │   ├── StatsCard.tsx      # Statistics cards
 │   └── Toast.tsx          # Notifications
+├── components/ai-writer/  # AI Writer focused components
+├── services/              # Fetch helpers
+│   ├── guestService.ts    # Guest API helper
+│   └── aiWriterService.ts # AI writer API helper
 ├── hooks/                 # Custom React hooks
 │   ├── useApi.ts          # API management
 │   └── useTheme.ts        # Theme management
@@ -109,11 +121,10 @@ npm run dev
 ## 🎨 Design System
 
 ### Color Palette
-- **Primary**: Blue tones for main actions
-- **Secondary**: Gray tones for neutral elements  
-- **Success**: Green for positive actions
-- **Warning**: Orange for caution
-- **Danger**: Red for errors/destructive actions
+- **Primary (Teal)**: `#066055` with extended seafoam scale for actions and highlights
+- **Secondary (Sand)**: `#F2EEE8` driven neutrals for surfaces and cards
+- **Charcoal**: `#313131` typographic anchor for high-contrast text
+- **Accent**: Complementary aquamarine highlights for interactive states
 
 ### Components
 - **Cards**: Elevated containers with hover effects
@@ -197,18 +208,14 @@ For support and questions:
 - Check the documentation
 - Review the code comments
 
-## 🔮 Future Enhancements
+## 🔮 Studio Roadmap
 
-- [ ] Real-time notifications
-- [ ] Advanced filtering options
-- [ ] Guest profile management
-- [ ] Email marketing integration
-- [ ] Multi-language support
-- [ ] Advanced analytics dashboard
-- [ ] API rate limiting
-- [ ] Data backup/restore
-- [ ] User authentication
-- [ ] Role-based access control
+- [ ] Experience Marketplace add-on
+- [ ] Campaign Orchestrator automation suite
+- [ ] Native email + push journeys
+- [ ] Multilingual guest communications
+- [ ] Deep analytics with predictive layers
+- [ ] Role-based access across add-ons
 
 ---
 

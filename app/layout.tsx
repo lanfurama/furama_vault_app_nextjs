@@ -6,10 +6,10 @@ import PageTransitionLoader from '@/components/PageTransitionLoader'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Furama Vault - Management System',
-  description: 'Comprehensive management system for Furama Resort with guest management, analytics, reporting, and more',
-  keywords: 'management system, guest management, hotel management, resort, analytics, reporting, dashboard',
-  authors: [{ name: 'Furama Resort' }],
+  title: 'Furama Studio',
+  description: 'Unified digital workspace for Furama Resort with PMS, analytics, AI storytelling, and more add-ons.',
+  keywords: 'furama studio, hospitality platform, pms, ai writer, analytics, resort management',
+  authors: [{ name: 'Furama Studio' }],
   viewport: 'width=device-width, initial-scale=1',
   icons: {
     icon: [
@@ -27,10 +27,10 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="dark">
       <body className={inter.className}>
         <PageTransitionLoader />
-        <div className="min-h-screen bg-secondary-50 dark:bg-secondary-900" style={{ transition: 'background-color 150ms ease-in-out' }}>
+        <div className="min-h-screen bg-secondary-50 dark:bg-charcoal-900" style={{ transition: 'background-color 150ms ease-in-out' }}>
           {children}
         </div>
       </body>
