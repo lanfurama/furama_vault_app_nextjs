@@ -6,9 +6,9 @@ export interface Coordinates {
 export interface Restaurant {
   name: string
   address: string
-  description: string
   rating?: number
   imageUrl?: string
+  distanceKm?: number
 }
 
 export interface GroundingSource {

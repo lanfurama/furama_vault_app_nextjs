@@ -40,3 +40,4 @@ export const TRANSLATOR_LANGUAGES: TranslatorLanguage[] = [
   { code: 'hr', name: 'Croatian' },
 ]
 
+

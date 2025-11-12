@@ -37,9 +37,6 @@ interface SearchParams {
   location: Coordinates
 }
 
-const FALLBACK_IMAGE =
-  'https://images.unsplash.com/photo-1555992336-cbf54f7d7621?auto=format&fit=crop&w=800&q=80'
-
 const sanitizeRestaurant = (candidate: any): Restaurant | null => {
   if (!candidate || typeof candidate !== 'object') {
     return null
@@ -49,7 +46,7 @@ const sanitizeRestaurant = (candidate: any): Restaurant | null => {
   const address = String(candidate.address ?? '').trim()
   const description = String(candidate.description ?? '').trim()
 
-  if (!name || !description) {
+  if (!name) {
     return null
   }
 
@@ -62,24 +59,59 @@ const sanitizeRestaurant = (candidate: any): Restaurant | null => {
   const imageUrl =
     typeof candidate.imageUrl === 'string' && candidate.imageUrl.trim().length > 0
       ? candidate.imageUrl.trim()
-      : FALLBACK_IMAGE
+      : undefined
 
   return {
     name,
     address,
-    description,
     rating,
     imageUrl,
+    distanceKm:
+      typeof candidate.distanceKm === 'number' && Number.isFinite(candidate.distanceKm)
+        ? Math.max(0, candidate.distanceKm)
+        : undefined,
   }
 }
 
+const extractJsonArray = (raw: string): string | null => {
+  const cleaned = raw.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim()
+  const arrayMatch = cleaned.match(/\[[\s\S]*]/)
+  if (arrayMatch) {
+    return arrayMatch[0]
+  }
+
+  // Some responses wrap data in an object like { "results": [...] }
+  const objectMatch = cleaned.match(/\{\s*"[^"]+"\s*:\s*\[[\s\S]*]}/)
+  if (objectMatch) {
+    try {
+      const parsed = JSON.parse(objectMatch[0])
+      const firstArray = Object.values(parsed).find(value => Array.isArray(value))
+      if (firstArray) {
+        return JSON.stringify(firstArray)
+      }
+    } catch {
+      return null
+    }
+  }
+
+  return null
+}
+
 const parseRestaurantsFromJson = (text: string): Restaurant[] => {
+  const jsonCandidate = extractJsonArray(text) ?? text
   try {
-    const parsed = JSON.parse(text)
-    if (!Array.isArray(parsed)) {
+    const parsed = JSON.parse(jsonCandidate)
+    const array = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray((parsed as any)?.results)
+        ? (parsed as any).results
+        : []
+
+    if (!Array.isArray(array)) {
       return []
     }
-    const restaurants = parsed
+
+    const restaurants = array
       .map(item => sanitizeRestaurant(item))
       .filter((item): item is Restaurant => item !== null)
     return restaurants
@@ -103,8 +135,9 @@ const parseRestaurantsFromText = (text: string): Restaurant[] => {
     restaurants.push({
       name: match[1].replace(/\*\*/g, '').trim(),
       address: match[2].trim(),
-      description: match[3].trim(),
-      imageUrl: FALLBACK_IMAGE,
+      rating: undefined,
+      imageUrl: undefined,
+      distanceKm: undefined,
     })
   }
 
@@ -127,12 +160,11 @@ export const findNearbyEateries = async ({
 {
   "name": string,
   "address": string,
-  "description": string,
   "rating": number (0-5, round to one decimal place),
-  "imageUrl": string (high-quality photo URL or Google Maps photo URL)
+  "distanceKm": number (distance from the provided coordinates in kilometers, rounded to one decimal place)
 }
-Ensure descriptions capture unique highlights, rating reflects overall guest sentiment, and imageUrl is a direct link to a representative photo.`
-    : `Find top matches for "${query}" within a ${radius} kilometer radius from the provided location. Reply with **only a JSON array** of objects containing: name, address, description, rating (0-5), imageUrl (direct photo URL). Keep descriptions concise and highlight what makes each spot special.`
+Ensure ratings reflect overall guest sentiment and distanceKm is accurate.`
+    : `Find top matches for "${query}" within a ${radius} kilometer radius from the provided location. Reply with **only a JSON array** of objects containing: name, address, rating (0-5), distanceKm (rounded to one decimal place).`
 
   const config: Record<string, unknown> = isThinkingMode
     ? {
@@ -156,7 +188,7 @@ Ensure descriptions capture unique highlights, rating reflects overall guest sen
     config,
   })
 
-  const textResponse = response.text
+  const textResponse = response.text ?? ''
   const restaurants = parseRestaurantsFromText(textResponse)
 
   const groundingChunks =
@@ -173,9 +205,7 @@ Ensure descriptions capture unique highlights, rating reflects overall guest sen
 
   if (restaurants.length === 0 && textResponse) {
     return {
-      restaurants: [
-        { name: 'Response', address: '', description: textResponse },
-      ],
+      restaurants: [],
       sources,
     }
   }

@@ -1,4 +1,4 @@
-import { Star } from 'lucide-react'
+import { MapPin, Star } from 'lucide-react'
 
 import type { Restaurant } from '@/types/nearby-discovery'
 
@@ -42,30 +42,28 @@ const RestaurantCard = ({ restaurant, index }: RestaurantCardProps) => {
       className="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-lg motion-safe:animate-slide-up dark:border-charcoal-700 dark:bg-charcoal-900"
       style={{ animationDelay }}
     >
-      {restaurant.imageUrl && (
-        <img
-          src={restaurant.imageUrl}
-          alt={restaurant.name}
-          className="h-44 w-full object-cover"
-          loading="lazy"
-        />
-      )}
       <div className="flex flex-grow flex-col p-5">
         <h3 className="text-xl font-bold text-blue-600 dark:text-blue-300">
           {restaurant.name}
         </h3>
-        {restaurant.address && (
-          <p className="mt-1 flex items-center text-sm text-gray-500 dark:text-secondary-400">
-            <MapPinIcon className="mr-1.5 h-4 w-4 shrink-0" />
-            {restaurant.address}
-          </p>
-        )}
+        <div className="mt-2 flex flex-col gap-1 text-sm text-gray-500 dark:text-secondary-400">
+          {restaurant.address && (
+            <p className="flex items-center">
+              <MapPinIcon className="mr-1.5 h-4 w-4 shrink-0" />
+              {restaurant.address}
+            </p>
+          )}
+          {typeof restaurant.distanceKm === 'number' && (
+            <p className="flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-300">
+              <MapPin className="h-3 w-3" />
+              {restaurant.distanceKm.toFixed(1)} km away
+            </p>
+          )}
+        </div>
         {typeof restaurant.rating === 'number' && (
           <div className="mt-3">{renderStars(restaurant.rating)}</div>
         )}
-        <p className="mt-4 flex-1 text-base text-gray-700 dark:text-secondary-300">
-          {restaurant.description}
-        </p>
+        <div className="mt-4 flex-1" />
         {restaurant.address && (
           <div className="mt-5">
             <a
